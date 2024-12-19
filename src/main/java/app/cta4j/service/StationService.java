@@ -1,9 +1,12 @@
 package app.cta4j.service;
 
+import app.cta4j.client.ArrivalClient;
 import app.cta4j.jooq.Tables;
+import app.cta4j.model.Arrival;
+import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.Station;
-import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.jooq.DSLContext;
 
@@ -13,17 +16,21 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public final class StationService {
-    private final Cache<String, Set<Station>> cache;
+    private final LoadingCache<String, Set<Station>> cache;
 
     private final DSLContext context;
 
+    private final ArrivalClient arrivalClient;
+
     @Inject
-    public StationService(DSLContext context) {
+    public StationService(DSLContext context, ArrivalClient arrivalClient) {
         this.cache = Caffeine.newBuilder()
                              .expireAfterWrite(1L, TimeUnit.MINUTES)
-                             .build();
+                             .build(key -> this.loadStations());
 
         this.context = Objects.requireNonNull(context);
+
+        this.arrivalClient = Objects.requireNonNull(arrivalClient);
     }
 
     private Set<Station> loadStations() {
@@ -34,6 +41,12 @@ public final class StationService {
     }
 
     public Set<Station> getStations() {
-        return this.cache.get("stations", key -> this.loadStations());
+        return this.cache.get("stations");
+    }
+
+    public Set<Arrival> getArrivals(String stationId) {
+        return this.arrivalClient.getArrivals(stationId)
+                                 .body()
+                                 .arrivals();
     }
 }
