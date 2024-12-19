@@ -26,8 +26,9 @@ public final class Application {
 
         StationService service = injector.getInstance(StationService.class);
 
-        Javalin.create()
-               .get("/api/stations", ctx -> {
+        Javalin javalin = Javalin.create();
+
+        javalin.get("/api/stations", ctx -> {
                    Set<Station> stations = service.getStations();
 
                    ctx.json(stations);
@@ -38,14 +39,16 @@ public final class Application {
                    Set<Arrival> arrivals = service.getArrivals(stationId);
 
                    ctx.json(arrivals);
-               })
-               .exception(Exception.class, (e, ctx) -> {
-                   String message = e.getMessage();
+               });
 
-                   Application.LOGGER.error(message, e);
+        javalin.exception(Exception.class, (e, ctx) -> {
+            String message = e.getMessage();
 
-                   ctx.status(500);
-               })
-               .start(8080);
+            Application.LOGGER.error(message, e);
+
+            ctx.status(500);
+        });
+
+        javalin.start(8080);
     }
 }

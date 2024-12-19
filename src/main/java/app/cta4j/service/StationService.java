@@ -25,7 +25,7 @@ public final class StationService {
     @Inject
     public StationService(DSLContext context, ArrivalClient arrivalClient) {
         this.cache = Caffeine.newBuilder()
-                             .expireAfterWrite(1L, TimeUnit.MINUTES)
+                             .expireAfterWrite(24L, TimeUnit.HOURS)
                              .build(key -> this.loadStations());
 
         this.context = Objects.requireNonNull(context);
