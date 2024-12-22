@@ -1,10 +1,9 @@
 package app.cta4j.service;
 
 import app.cta4j.client.ArrivalClient;
+import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.jooq.Tables;
-import app.cta4j.model.Arrival;
-import app.cta4j.model.ArrivalResponse;
-import app.cta4j.model.Station;
+import app.cta4j.model.*;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
@@ -14,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public final class StationService {
     private final LoadingCache<String, Set<Station>> cache;
@@ -45,8 +45,26 @@ public final class StationService {
     }
 
     public Set<Arrival> getArrivals(String stationId) {
-        return this.arrivalClient.getArrivals(stationId)
-                                 .body()
-                                 .arrivals();
+        ArrivalResponse response = this.arrivalClient.getArrivals(stationId);
+
+        if (response == null) {
+            throw new RuntimeException("The train response is null for station ID %s".formatted(stationId));
+        }
+
+        ArrivalBody body = response.body();
+
+        if (body == null) {
+            throw new RuntimeException("The train body is null for station ID %s".formatted(stationId));
+        }
+
+        Set<Arrival> arrivals = body.arrivals();
+
+        if (arrivals == null) {
+            throw new ResourceNotFoundException("The Set of trains is null for station ID %s".formatted(stationId));
+        }
+
+        return arrivals.stream()
+                       .filter(arrival -> arrival.line() != Line.N_A)
+                       .collect(Collectors.toSet());
     }
 }

@@ -13,7 +13,7 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Arrival(
         @JsonAlias("rn")
-        int run,
+        String run,
 
         @JsonAlias("rt")
         Line line,
@@ -47,6 +47,8 @@ public record Arrival(
         boolean delayed
 ) {
     public Arrival {
+        Objects.requireNonNull(run);
+
         Objects.requireNonNull(line);
 
         Objects.requireNonNull(destination);

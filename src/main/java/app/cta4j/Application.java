@@ -1,5 +1,6 @@
 package app.cta4j;
 
+import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.Arrival;
 import app.cta4j.model.Station;
 import app.cta4j.module.ApplicationModule;
@@ -24,31 +25,35 @@ public final class Application {
 
         Injector injector = Guice.createInjector(module);
 
-        StationService service = injector.getInstance(StationService.class);
+        StationService stationService = injector.getInstance(StationService.class);
 
-        Javalin javalin = Javalin.create();
-
-        javalin.get("/api/stations", ctx -> {
-                   Set<Station> stations = service.getStations();
+        Javalin.create()
+               .get("/api/stations", ctx -> {
+                   Set<Station> stations = stationService.getStations();
 
                    ctx.json(stations);
                })
                .get("/api/stations/{stationId}/arrivals", ctx -> {
                    String stationId = ctx.pathParam("stationId");
 
-                   Set<Arrival> arrivals = service.getArrivals(stationId);
+                   Set<Arrival> arrivals = stationService.getArrivals(stationId);
 
                    ctx.json(arrivals);
-               });
+               })
+               .exception(ResourceNotFoundException.class, (e, ctx) -> {
+                   String message = e.getMessage();
 
-        javalin.exception(Exception.class, (e, ctx) -> {
-            String message = e.getMessage();
+                   Application.LOGGER.error(message);
 
-            Application.LOGGER.error(message, e);
+                   ctx.status(404);
+               })
+               .exception(Exception.class, (e, ctx) -> {
+                   String message = e.getMessage();
 
-            ctx.status(500);
-        });
+                   Application.LOGGER.error(message, e);
 
-        javalin.start(8080);
+                   ctx.status(500);
+               })
+               .start(8080);
     }
 }
