@@ -83,7 +83,7 @@ class StationServiceTests {
 
     @Test
     void testGetArrivals_returns_arrivals() {
-        Set<Arrival> expected = Set.of(
+        List<Arrival> expected = List.of(
             new Arrival("123", Line.RED, "95th/Dan Ryan", "Belmont", Instant.parse("2021-09-01T12:00:00Z"), Instant.parse("2021-09-01T12:05:00Z"), true, false, false),
             new Arrival("456", Line.BROWN, "Kimball", "Belmont", Instant.parse("2021-09-01T12:10:00Z"), Instant.parse("2021-09-01T12:15:00Z"), false, true, false),
             new Arrival("789", Line.PURPLE, "Linden", "Belmont", Instant.parse("2021-09-01T12:20:00Z"), Instant.parse("2021-09-01T12:25:00Z"), false, false, true)
@@ -93,7 +93,7 @@ class StationServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getArrivals("41320"))
+        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Set<Arrival> actual = this.stationService.getArrivals("41320");
@@ -104,24 +104,24 @@ class StationServiceTests {
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_response() {
-        Mockito.when(this.arrivalClient.getArrivals("41320"))
+        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
                .thenReturn(null);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
                   .isInstanceOf(RuntimeException.class)
-                  .hasMessage("The train response is null for station ID 41320");
+                  .hasMessage("The arrival response is null for station ID 41320");
     }
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_body() {
         ArrivalResponse response = new ArrivalResponse(null);
 
-        Mockito.when(this.arrivalClient.getArrivals("41320"))
+        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
                   .isInstanceOf(RuntimeException.class)
-                  .hasMessage("The train body is null for station ID 41320");
+                  .hasMessage("The arrival body is null for station ID 41320");
     }
 
     @Test
@@ -130,27 +130,27 @@ class StationServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getArrivals("41320"))
+        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
                   .isInstanceOf(ResourceNotFoundException.class)
-                  .hasMessage("The Set of trains is null for station ID 41320");
+                  .hasMessage("The List of arrivals is null for station ID 41320");
     }
 
     @Test
     void testGetArrivals_filters_na_arrivals() {
-        Set<Arrival> stations = Set.of(
+        List<Arrival> arrivals = List.of(
             new Arrival("123", Line.RED, "95th/Dan Ryan", "Belmont", Instant.parse("2021-09-01T12:00:00Z"), Instant.parse("2021-09-01T12:05:00Z"), true, false, false),
             new Arrival("456", Line.BROWN, "Kimball", "Belmont", Instant.parse("2021-09-01T12:10:00Z"), Instant.parse("2021-09-01T12:15:00Z"), false, true, false),
             new Arrival("789", Line.N_A, "Linden", "Belmont", Instant.parse("2021-09-01T12:20:00Z"), Instant.parse("2021-09-01T12:25:00Z"), false, false, true)
         );
 
-        ArrivalBody body = new ArrivalBody(stations);
+        ArrivalBody body = new ArrivalBody(arrivals);
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getArrivals("41320"))
+        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Set<Arrival> actual = this.stationService.getArrivals("41320");

@@ -45,22 +45,22 @@ public final class StationService {
     }
 
     public Set<Arrival> getArrivals(String stationId) {
-        ArrivalResponse response = this.arrivalClient.getArrivals(stationId);
+        ArrivalResponse response = this.arrivalClient.getStationArrivals(stationId);
 
         if (response == null) {
-            throw new RuntimeException("The train response is null for station ID %s".formatted(stationId));
+            throw new RuntimeException("The arrival response is null for station ID %s".formatted(stationId));
         }
 
         ArrivalBody body = response.body();
 
         if (body == null) {
-            throw new RuntimeException("The train body is null for station ID %s".formatted(stationId));
+            throw new RuntimeException("The arrival body is null for station ID %s".formatted(stationId));
         }
 
-        Set<Arrival> arrivals = body.arrivals();
+        List<Arrival> arrivals = body.arrivals();
 
         if (arrivals == null) {
-            throw new ResourceNotFoundException("The Set of trains is null for station ID %s".formatted(stationId));
+            throw new ResourceNotFoundException("The List of arrivals is null for station ID %s".formatted(stationId));
         }
 
         return arrivals.stream()

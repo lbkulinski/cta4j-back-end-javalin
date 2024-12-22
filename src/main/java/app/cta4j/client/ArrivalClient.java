@@ -6,5 +6,8 @@ import feign.RequestLine;
 
 public interface ArrivalClient {
     @RequestLine("GET /ttarrivals.aspx?mapid={stationId}")
-    ArrivalResponse getArrivals(@Param("stationId") String stationId);
+    ArrivalResponse getStationArrivals(@Param("stationId") String stationId);
+
+    @RequestLine("GET /ttfollow.aspx?runnumber={run}")
+    ArrivalResponse getTrainArrivals(@Param("run") String run);
 }

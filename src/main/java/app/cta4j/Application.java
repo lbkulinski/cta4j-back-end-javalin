@@ -5,12 +5,14 @@ import app.cta4j.model.Arrival;
 import app.cta4j.model.Station;
 import app.cta4j.module.ApplicationModule;
 import app.cta4j.service.StationService;
+import app.cta4j.service.TrainService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.javalin.Javalin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Set;
 
 public final class Application {
@@ -27,6 +29,8 @@ public final class Application {
 
         StationService stationService = injector.getInstance(StationService.class);
 
+        TrainService trainService = injector.getInstance(TrainService.class);
+
         Javalin.create()
                .get("/api/stations", ctx -> {
                    Set<Station> stations = stationService.getStations();
@@ -37,6 +41,13 @@ public final class Application {
                    String stationId = ctx.pathParam("stationId");
 
                    Set<Arrival> arrivals = stationService.getArrivals(stationId);
+
+                   ctx.json(arrivals);
+               })
+               .get("/api/trains/{run}/arrivals", ctx -> {
+                   String run = ctx.pathParam("run");
+
+                   List<Arrival> arrivals = trainService.getArrivals(run);
 
                    ctx.json(arrivals);
                })
