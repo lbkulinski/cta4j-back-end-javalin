@@ -1,6 +1,6 @@
 name: cta4j Back-end CI
 on:
-  pull_request:
+  push:
     branches: [ "main" ]
 jobs:
   build:
