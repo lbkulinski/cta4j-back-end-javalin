@@ -1,6 +1,6 @@
 package app.cta4j.service;
 
-import app.cta4j.client.ArrivalClient;
+import app.cta4j.client.TrainArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.Arrival;
 import app.cta4j.model.ArrivalBody;
@@ -12,17 +12,17 @@ import java.util.List;
 import java.util.Objects;
 
 public final class TrainService {
-    private final ArrivalClient arrivalClient;
+    private final TrainArrivalClient trainArrivalClient;
 
     @Inject
-    public TrainService(ArrivalClient arrivalClient) {
-        this.arrivalClient = Objects.requireNonNull(arrivalClient);
+    public TrainService(TrainArrivalClient trainArrivalClient) {
+        this.trainArrivalClient = Objects.requireNonNull(trainArrivalClient);
     }
 
     public List<Arrival> getArrivals(String run) {
         Objects.requireNonNull(run);
 
-        ArrivalResponse response = this.arrivalClient.getTrainArrivals(run);
+        ArrivalResponse response = this.trainArrivalClient.getTrainArrivals(run);
 
         if (response == null) {
             throw new RuntimeException("The arrival response is null for run %s".formatted(run));

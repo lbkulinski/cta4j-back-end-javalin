@@ -1,6 +1,6 @@
 package app.cta4j;
 
-import app.cta4j.client.ArrivalClient;
+import app.cta4j.client.TrainArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.jooq.Tables;
 import app.cta4j.model.*;
@@ -21,7 +21,7 @@ import java.util.Set;
 class StationServiceTests {
     private DSLContext context;
 
-    private ArrivalClient arrivalClient;
+    private TrainArrivalClient trainArrivalClient;
 
     private StationService stationService;
 
@@ -29,9 +29,9 @@ class StationServiceTests {
     void setUp() {
         this.context = Mockito.mock(DSLContext.class);
 
-        this.arrivalClient = Mockito.mock(ArrivalClient.class);
+        this.trainArrivalClient = Mockito.mock(TrainArrivalClient.class);
 
-        this.stationService = new StationService(this.context, this.arrivalClient);
+        this.stationService = new StationService(this.context, this.trainArrivalClient);
     }
 
     @Test
@@ -93,7 +93,7 @@ class StationServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Set<Arrival> actual = this.stationService.getArrivals("41320");
@@ -104,7 +104,7 @@ class StationServiceTests {
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_response() {
-        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
                .thenReturn(null);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
@@ -116,7 +116,7 @@ class StationServiceTests {
     void testGetArrivals_throws_runtime_exception_with_null_body() {
         ArrivalResponse response = new ArrivalResponse(null);
 
-        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
@@ -130,7 +130,7 @@ class StationServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
@@ -150,7 +150,7 @@ class StationServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Set<Arrival> actual = this.stationService.getArrivals("41320");

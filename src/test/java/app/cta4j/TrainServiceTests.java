@@ -1,6 +1,6 @@
 package app.cta4j;
 
-import app.cta4j.client.ArrivalClient;
+import app.cta4j.client.TrainArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.*;
 import app.cta4j.service.TrainService;
@@ -14,15 +14,15 @@ import java.util.List;
 import java.util.Set;
 
 class TrainServiceTests {
-    private ArrivalClient arrivalClient;
+    private TrainArrivalClient trainArrivalClient;
 
     private TrainService trainService;
 
     @BeforeEach
     void setUp() {
-        this.arrivalClient = Mockito.mock(ArrivalClient.class);
+        this.trainArrivalClient = Mockito.mock(TrainArrivalClient.class);
 
-        this.trainService = new TrainService(this.arrivalClient);
+        this.trainService = new TrainService(this.trainArrivalClient);
     }
 
     @Test
@@ -37,7 +37,7 @@ class TrainServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         List<Arrival> actual = this.trainService.getArrivals("417");
@@ -48,7 +48,7 @@ class TrainServiceTests {
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_response() {
-        Mockito.when(this.arrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(null);
 
         Assertions.assertThatThrownBy(() -> this.trainService.getArrivals("417"))
@@ -60,7 +60,7 @@ class TrainServiceTests {
     void testGetArrivals_throws_runtime_exception_with_null_body() {
         ArrivalResponse response = new ArrivalResponse(null);
 
-        Mockito.when(this.arrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.trainService.getArrivals("417"))
@@ -74,7 +74,7 @@ class TrainServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.trainService.getArrivals("417"))
@@ -94,7 +94,7 @@ class TrainServiceTests {
 
         ArrivalResponse response = new ArrivalResponse(body);
 
-        Mockito.when(this.arrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         List<Arrival> actual = this.trainService.getArrivals("417");

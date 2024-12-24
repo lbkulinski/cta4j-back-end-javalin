@@ -2,9 +2,11 @@ package app.cta4j;
 
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.Arrival;
+import app.cta4j.model.Route;
 import app.cta4j.model.Station;
 import app.cta4j.module.ApplicationModule;
 import app.cta4j.service.StationService;
+import app.cta4j.service.StopService;
 import app.cta4j.service.TrainService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -31,6 +33,8 @@ public final class Application {
 
         TrainService trainService = injector.getInstance(TrainService.class);
 
+        StopService stopService = injector.getInstance(StopService.class);
+
         Javalin.create()
                .get("/api/stations", ctx -> {
                    Set<Station> stations = stationService.getStations();
@@ -50,6 +54,11 @@ public final class Application {
                    List<Arrival> arrivals = trainService.getArrivals(run);
 
                    ctx.json(arrivals);
+               })
+               .get("/api/routes", ctx -> {
+                   Set<Route> routes = stopService.getRoutes();
+
+                   ctx.json(routes);
                })
                .exception(ResourceNotFoundException.class, (e, ctx) -> {
                    String message = e.getMessage();
