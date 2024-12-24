@@ -1,6 +1,6 @@
 package app.cta4j.service;
 
-import app.cta4j.client.ArrivalClient;
+import app.cta4j.client.TrainArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.jooq.Tables;
 import app.cta4j.model.*;
@@ -20,17 +20,17 @@ public final class StationService {
 
     private final DSLContext context;
 
-    private final ArrivalClient arrivalClient;
+    private final TrainArrivalClient trainArrivalClient;
 
     @Inject
-    public StationService(DSLContext context, ArrivalClient arrivalClient) {
+    public StationService(DSLContext context, TrainArrivalClient trainArrivalClient) {
         this.cache = Caffeine.newBuilder()
                              .expireAfterWrite(24L, TimeUnit.HOURS)
                              .build(key -> this.loadStations());
 
         this.context = Objects.requireNonNull(context);
 
-        this.arrivalClient = Objects.requireNonNull(arrivalClient);
+        this.trainArrivalClient = Objects.requireNonNull(trainArrivalClient);
     }
 
     private Set<Station> loadStations() {
@@ -45,7 +45,7 @@ public final class StationService {
     }
 
     public Set<Arrival> getArrivals(String stationId) {
-        ArrivalResponse response = this.arrivalClient.getStationArrivals(stationId);
+        ArrivalResponse response = this.trainArrivalClient.getStationArrivals(stationId);
 
         if (response == null) {
             throw new RuntimeException("The arrival response is null for station ID %s".formatted(stationId));

@@ -1,10 +1,8 @@
 package app.cta4j.module;
 
-import app.cta4j.client.ArrivalClient;
-import app.cta4j.provider.ArrivalClientProvider;
-import app.cta4j.provider.DSLContextProvider;
-import app.cta4j.provider.HikariDataSourceProvider;
-import app.cta4j.provider.SecretCacheProvider;
+import app.cta4j.client.BusArrivalClient;
+import app.cta4j.client.TrainArrivalClient;
+import app.cta4j.provider.*;
 import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.google.inject.AbstractModule;
 import com.zaxxer.hikari.HikariDataSource;
@@ -22,7 +20,10 @@ public final class ApplicationModule extends AbstractModule {
         this.bind(DSLContext.class)
             .toProvider(DSLContextProvider.class);
 
-        this.bind(ArrivalClient.class)
-            .toProvider(ArrivalClientProvider.class);
+        this.bind(TrainArrivalClient.class)
+            .toProvider(TrainArrivalClientProvider.class);
+
+        this.bind(BusArrivalClient.class)
+            .toProvider(BusArrivalClientProvider.class);
     }
 }
