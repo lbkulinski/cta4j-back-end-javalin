@@ -1,5 +1,7 @@
 package app.cta4j.module;
 
+import app.cta4j.client.ArrivalClient;
+import app.cta4j.provider.ArrivalClientProvider;
 import app.cta4j.provider.DSLContextProvider;
 import app.cta4j.provider.HikariDataSourceProvider;
 import app.cta4j.provider.SecretCacheProvider;
@@ -19,5 +21,8 @@ public final class ApplicationModule extends AbstractModule {
 
         this.bind(DSLContext.class)
             .toProvider(DSLContextProvider.class);
+
+        this.bind(ArrivalClient.class)
+            .toProvider(ArrivalClientProvider.class);
     }
 }
