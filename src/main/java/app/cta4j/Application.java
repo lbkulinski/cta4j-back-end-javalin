@@ -1,9 +1,7 @@
 package app.cta4j;
 
 import app.cta4j.exception.ResourceNotFoundException;
-import app.cta4j.model.Arrival;
-import app.cta4j.model.Route;
-import app.cta4j.model.Station;
+import app.cta4j.model.*;
 import app.cta4j.module.ApplicationModule;
 import app.cta4j.service.StationService;
 import app.cta4j.service.StopService;
@@ -59,6 +57,22 @@ public final class Application {
                    Set<Route> routes = stopService.getRoutes();
 
                    ctx.json(routes);
+               })
+               .get("/api/routes/{routeId}/directions", ctx -> {
+                   String routeId = ctx.pathParam("routeId");
+
+                   Set<Direction> directions = stopService.getDirections(routeId);
+
+                   ctx.json(directions);
+               })
+               .get("/api/routes/{routeId}/directions/{direction}/stops", ctx -> {
+                   String routeId = ctx.pathParam("routeId");
+
+                   String direction = ctx.pathParam("direction");
+
+                   Set<Stop> stops = stopService.getStops(routeId, direction);
+
+                   ctx.json(stops);
                })
                .exception(ResourceNotFoundException.class, (e, ctx) -> {
                    String message = e.getMessage();
