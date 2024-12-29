@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public record Stop(
     @JsonAlias("stpid")
-    int id,
+    String id,
 
     @JsonAlias("stpnm")
     String name

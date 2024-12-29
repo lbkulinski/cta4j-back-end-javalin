@@ -10,7 +10,7 @@ import java.time.Instant;
 
 public record StopArrival(
     @JsonAlias("vid")
-    int id,
+    String id,
 
     @JsonAlias("typ")
     StopEventType type,

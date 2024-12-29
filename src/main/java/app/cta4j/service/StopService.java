@@ -109,7 +109,7 @@ public final class StopService {
         return this.stopCache.get(key, this::loadStops);
     }
 
-    public Set<StopArrival> getArrivals(String routeId, String stopId) {
+    public List<StopArrival> getArrivals(String routeId, String stopId) {
         ArrivalResponse<StopArrival> response = this.client.getStopArrivals(routeId, stopId);
 
         if (response == null) {
@@ -131,6 +131,6 @@ public final class StopService {
             The List of arrivals is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
         }
 
-        return Set.copyOf(arrivals);
+        return List.copyOf(arrivals);
     }
 }
