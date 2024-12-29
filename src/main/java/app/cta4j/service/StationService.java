@@ -4,6 +4,9 @@ import app.cta4j.client.TrainArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.jooq.Tables;
 import app.cta4j.model.*;
+import app.cta4j.model.train.Line;
+import app.cta4j.model.train.Station;
+import app.cta4j.model.train.TrainArrival;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
@@ -44,20 +47,20 @@ public final class StationService {
         return this.cache.get("stations");
     }
 
-    public Set<Arrival> getArrivals(String stationId) {
-        ArrivalResponse response = this.trainArrivalClient.getStationArrivals(stationId);
+    public Set<TrainArrival> getArrivals(String stationId) {
+        ArrivalResponse<TrainArrival> response = this.trainArrivalClient.getStationArrivals(stationId);
 
         if (response == null) {
             throw new RuntimeException("The arrival response is null for station ID %s".formatted(stationId));
         }
 
-        ArrivalBody body = response.body();
+        ArrivalBody<TrainArrival> body = response.body();
 
         if (body == null) {
             throw new RuntimeException("The arrival body is null for station ID %s".formatted(stationId));
         }
 
-        List<Arrival> arrivals = body.arrivals();
+        List<TrainArrival> arrivals = body.arrivals();
 
         if (arrivals == null) {
             throw new ResourceNotFoundException("The List of arrivals is null for station ID %s".formatted(stationId));

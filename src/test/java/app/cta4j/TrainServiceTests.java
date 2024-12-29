@@ -3,6 +3,8 @@ package app.cta4j;
 import app.cta4j.client.TrainArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.*;
+import app.cta4j.model.train.Line;
+import app.cta4j.model.train.TrainArrival;
 import app.cta4j.service.TrainService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,10 +29,10 @@ class TrainServiceTests {
 
     @Test
     void testGetArrivals_returns_arrivals() {
-        List<Arrival> expected = List.of(
-            new Arrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
-            new Arrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false),
-            new Arrival("417", Line.BROWN, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
+        List<TrainArrival> expected = List.of(
+            new TrainArrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
+            new TrainArrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false),
+            new TrainArrival("417", Line.BROWN, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
         );
 
         ArrivalBody body = new ArrivalBody(expected);
@@ -40,7 +42,7 @@ class TrainServiceTests {
         Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
-        List<Arrival> actual = this.trainService.getArrivals("417");
+        List<TrainArrival> actual = this.trainService.getArrivals("417");
 
         Assertions.assertThat(actual)
                   .hasSameElementsAs(expected);
@@ -84,10 +86,10 @@ class TrainServiceTests {
 
     @Test
     void testGetArrivals_filters_na_arrivals() {
-        List<Arrival> arrivals = List.of(
-            new Arrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
-            new Arrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false),
-            new Arrival("417", Line.N_A, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
+        List<TrainArrival> arrivals = List.of(
+            new TrainArrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
+            new TrainArrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false),
+            new TrainArrival("417", Line.N_A, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
         );
 
         ArrivalBody body = new ArrivalBody(arrivals);
@@ -97,11 +99,11 @@ class TrainServiceTests {
         Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
-        List<Arrival> actual = this.trainService.getArrivals("417");
+        List<TrainArrival> actual = this.trainService.getArrivals("417");
 
-        Set<Arrival> expected = Set.of(
-            new Arrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
-            new Arrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false)
+        Set<TrainArrival> expected = Set.of(
+            new TrainArrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
+            new TrainArrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false)
         );
 
         Assertions.assertThat(actual)
