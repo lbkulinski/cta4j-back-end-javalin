@@ -8,6 +8,7 @@ import app.cta4j.model.bus.StopArrival;
 import app.cta4j.model.train.Station;
 import app.cta4j.model.train.StationArrival;
 import app.cta4j.module.ApplicationModule;
+import app.cta4j.service.BusService;
 import app.cta4j.service.StationService;
 import app.cta4j.service.StopService;
 import app.cta4j.service.TrainService;
@@ -37,6 +38,8 @@ public final class Application {
         TrainService trainService = injector.getInstance(TrainService.class);
 
         StopService stopService = injector.getInstance(StopService.class);
+
+        BusService busService = injector.getInstance(BusService.class);
 
         Javalin.create()
                .get("/api/stations", ctx -> {
@@ -85,6 +88,13 @@ public final class Application {
                    String stopId = ctx.pathParam("stopId");
 
                    List<StopArrival> arrivals = stopService.getArrivals(routeId, stopId);
+
+                   ctx.json(arrivals);
+               })
+               .get("/api/buses/{id}/arrivals", ctx -> {
+                   String id = ctx.pathParam("id");
+
+                   List<StopArrival> arrivals = busService.getArrivals(id);
 
                    ctx.json(arrivals);
                })
