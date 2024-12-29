@@ -84,7 +84,7 @@ public final class Application {
 
                    String stopId = ctx.pathParam("stopId");
 
-                   Set<StopArrival> arrivals = stopService.getArrivals(routeId, stopId);
+                   List<StopArrival> arrivals = stopService.getArrivals(routeId, stopId);
 
                    ctx.json(arrivals);
                })
