@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class StopArrivalClientProvider implements Provider<StopArrivalClient> {
+public final class StopArrivalClientProvider implements Provider<StopArrivalClient> {
     private final SecretCache secretCache;
 
     private static final Logger LOGGER;

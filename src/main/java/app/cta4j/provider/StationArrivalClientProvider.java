@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class StationArrivalClientProvider implements Provider<StationArrivalClient> {
+public final class StationArrivalClientProvider implements Provider<StationArrivalClient> {
     private final SecretCache secretCache;
 
     private static final Logger LOGGER;
