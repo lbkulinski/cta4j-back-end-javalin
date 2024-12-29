@@ -1,6 +1,6 @@
 package app.cta4j.provider;
 
-import app.cta4j.client.BusArrivalClient;
+import app.cta4j.client.StopArrivalClient;
 import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,17 +17,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class BusArrivalClientProvider implements Provider<BusArrivalClient> {
+public class StopArrivalClientProvider implements Provider<StopArrivalClient> {
     private final SecretCache secretCache;
 
     private static final Logger LOGGER;
 
     static {
-        LOGGER = LoggerFactory.getLogger(BusArrivalClientProvider.class);
+        LOGGER = LoggerFactory.getLogger(StopArrivalClientProvider.class);
     }
 
     @Inject
-    public BusArrivalClientProvider(SecretCache secretCache) {
+    public StopArrivalClientProvider(SecretCache secretCache) {
         this.secretCache = Objects.requireNonNull(secretCache);
     }
 
@@ -47,7 +47,7 @@ public class BusArrivalClientProvider implements Provider<BusArrivalClient> {
         } catch (JsonProcessingException e) {
             String message = e.getMessage();
 
-            BusArrivalClientProvider.LOGGER.error(message);
+            StopArrivalClientProvider.LOGGER.error(message);
 
             throw new RuntimeException(e);
         }
@@ -56,7 +56,7 @@ public class BusArrivalClientProvider implements Provider<BusArrivalClient> {
     }
 
     @Override
-    public BusArrivalClient get() {
+    public StopArrivalClient get() {
         JacksonDecoder decoder = new JacksonDecoder();
 
         Map<String, String> secrets = this.getSecrets();
@@ -65,12 +65,12 @@ public class BusArrivalClientProvider implements Provider<BusArrivalClient> {
 
         RequestInterceptor requestInterceptor = template -> {
             template.query("key", apiKey);
-            template.query("outputType", "json");
+            template.query("format", "json");
         };
 
         return Feign.builder()
                     .decoder(decoder)
                     .requestInterceptor(requestInterceptor)
-                    .target(BusArrivalClient.class, "https://ctabustracker.com/bustime/api/v2");
+                    .target(StopArrivalClient.class, "https://ctabustracker.com/bustime/api/v2");
     }
 }

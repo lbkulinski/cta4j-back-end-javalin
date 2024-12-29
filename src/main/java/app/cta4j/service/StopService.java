@@ -1,10 +1,14 @@
 package app.cta4j.service;
 
-import app.cta4j.client.BusArrivalClient;
+import app.cta4j.client.StopArrivalClient;
+import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.jooq.Tables;
+import app.cta4j.model.ArrivalBody;
+import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.Direction;
 import app.cta4j.model.bus.Route;
 import app.cta4j.model.bus.Stop;
+import app.cta4j.model.bus.StopArrival;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -28,10 +32,10 @@ public final class StopService {
 
     private final DSLContext context;
 
-    private final BusArrivalClient busArrivalClient;
+    private final StopArrivalClient stopArrivalClient;
 
     @Inject
-    public StopService(DSLContext context, BusArrivalClient busArrivalClient) {
+    public StopService(DSLContext context, StopArrivalClient stopArrivalClient) {
         this.routeCache = Caffeine.newBuilder()
                                   .expireAfterWrite(24L, TimeUnit.HOURS)
                                   .build(key -> this.loadRoutes());
@@ -46,7 +50,7 @@ public final class StopService {
 
         this.context = Objects.requireNonNull(context);
 
-        this.busArrivalClient = Objects.requireNonNull(busArrivalClient);
+        this.stopArrivalClient = Objects.requireNonNull(stopArrivalClient);
     }
 
     private Set<Route> loadRoutes() {
@@ -91,5 +95,30 @@ public final class StopService {
 
     public Set<Stop> getStops(String routeId, String direction) {
         return this.stopCache.get(new RouteDirection(routeId, direction), key -> this.loadStops(routeId, direction));
+    }
+
+    public Set<StopArrival> getArrivals(String routeId, String stopId) {
+        ArrivalResponse<StopArrival> response = this.stopArrivalClient.getStopArrivals(routeId, stopId);
+
+        if (response == null) {
+            throw new RuntimeException("""
+            The arrival response is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
+        }
+
+        ArrivalBody<StopArrival> body = response.body();
+
+        if (body == null) {
+            throw new RuntimeException("""
+            The arrival body is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
+        }
+
+        List<StopArrival> arrivals = body.arrivals();
+
+        if (arrivals == null) {
+            throw new ResourceNotFoundException("""
+            The List of arrivals is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
+        }
+
+        return Set.copyOf(arrivals);
     }
 }

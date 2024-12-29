@@ -1,7 +1,7 @@
 package app.cta4j.module;
 
-import app.cta4j.client.BusArrivalClient;
-import app.cta4j.client.TrainArrivalClient;
+import app.cta4j.client.StopArrivalClient;
+import app.cta4j.client.StationArrivalClient;
 import app.cta4j.provider.*;
 import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.google.inject.AbstractModule;
@@ -20,10 +20,10 @@ public final class ApplicationModule extends AbstractModule {
         this.bind(DSLContext.class)
             .toProvider(DSLContextProvider.class);
 
-        this.bind(TrainArrivalClient.class)
-            .toProvider(TrainArrivalClientProvider.class);
+        this.bind(StationArrivalClient.class)
+            .toProvider(StationArrivalClientProvider.class);
 
-        this.bind(BusArrivalClient.class)
-            .toProvider(BusArrivalClientProvider.class);
+        this.bind(StopArrivalClient.class)
+            .toProvider(StopArrivalClientProvider.class);
     }
 }

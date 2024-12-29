@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.time.Instant;
 
-public record BusArrival(
+public record StopArrival(
     @JsonAlias("vid")
     int id,
 
