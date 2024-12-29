@@ -6,5 +6,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record ArrivalBody(@JsonAlias("eta") List<Arrival> arrivals) {
+public record ArrivalBody<T extends Arrival>(@JsonAlias(value = {"eta", "prd"}) List<T> arrivals) {
 }

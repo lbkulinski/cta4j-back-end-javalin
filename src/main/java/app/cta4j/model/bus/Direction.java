@@ -1,4 +1,4 @@
-package app.cta4j.model;
+package app.cta4j.model.bus;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

@@ -2,9 +2,9 @@ package app.cta4j.service;
 
 import app.cta4j.client.BusArrivalClient;
 import app.cta4j.jooq.Tables;
-import app.cta4j.model.Direction;
-import app.cta4j.model.Route;
-import app.cta4j.model.Stop;
+import app.cta4j.model.bus.Direction;
+import app.cta4j.model.bus.Route;
+import app.cta4j.model.bus.Stop;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;

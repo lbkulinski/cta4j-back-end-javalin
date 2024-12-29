@@ -1,7 +1,11 @@
 package app.cta4j;
 
 import app.cta4j.exception.ResourceNotFoundException;
-import app.cta4j.model.*;
+import app.cta4j.model.bus.Direction;
+import app.cta4j.model.bus.Route;
+import app.cta4j.model.bus.Stop;
+import app.cta4j.model.train.Station;
+import app.cta4j.model.train.TrainArrival;
 import app.cta4j.module.ApplicationModule;
 import app.cta4j.service.StationService;
 import app.cta4j.service.StopService;
@@ -42,14 +46,14 @@ public final class Application {
                .get("/api/stations/{stationId}/arrivals", ctx -> {
                    String stationId = ctx.pathParam("stationId");
 
-                   Set<Arrival> arrivals = stationService.getArrivals(stationId);
+                   Set<TrainArrival> arrivals = stationService.getArrivals(stationId);
 
                    ctx.json(arrivals);
                })
                .get("/api/trains/{run}/arrivals", ctx -> {
                    String run = ctx.pathParam("run");
 
-                   List<Arrival> arrivals = trainService.getArrivals(run);
+                   List<TrainArrival> arrivals = trainService.getArrivals(run);
 
                    ctx.json(arrivals);
                })
