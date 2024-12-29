@@ -24,7 +24,7 @@ import java.util.Set;
 class StationServiceTests {
     private DSLContext context;
 
-    private StationArrivalClient trainArrivalClient;
+    private StationArrivalClient stationArrivalClient;
 
     private StationService stationService;
 
@@ -32,9 +32,9 @@ class StationServiceTests {
     void setUp() {
         this.context = Mockito.mock(DSLContext.class);
 
-        this.trainArrivalClient = Mockito.mock(StationArrivalClient.class);
+        this.stationArrivalClient = Mockito.mock(StationArrivalClient.class);
 
-        this.stationService = new StationService(this.context, this.trainArrivalClient);
+        this.stationService = new StationService(this.context, this.stationArrivalClient);
     }
 
     @Test
@@ -96,7 +96,7 @@ class StationServiceTests {
 
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.stationArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Set<StationArrival> actual = this.stationService.getArrivals("41320");
@@ -107,7 +107,7 @@ class StationServiceTests {
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_response() {
-        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.stationArrivalClient.getStationArrivals("41320"))
                .thenReturn(null);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
@@ -119,7 +119,7 @@ class StationServiceTests {
     void testGetArrivals_throws_runtime_exception_with_null_body() {
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(null);
 
-        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.stationArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
@@ -133,7 +133,7 @@ class StationServiceTests {
 
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.stationArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.stationService.getArrivals("41320"))
@@ -153,7 +153,7 @@ class StationServiceTests {
 
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.trainArrivalClient.getStationArrivals("41320"))
+        Mockito.when(this.stationArrivalClient.getStationArrivals("41320"))
                .thenReturn(response);
 
         Set<StationArrival> actual = this.stationService.getArrivals("41320");
