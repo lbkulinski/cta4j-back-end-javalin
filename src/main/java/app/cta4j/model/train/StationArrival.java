@@ -7,10 +7,12 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.Builder;
 
 import java.time.Instant;
 import java.util.Objects;
 
+@Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record StationArrival(
         @JsonAlias("rn")

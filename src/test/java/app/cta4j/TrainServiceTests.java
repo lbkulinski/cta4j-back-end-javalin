@@ -28,14 +28,50 @@ class TrainServiceTests {
         this.service = new TrainService(this.client);
     }
 
+    private List<StationArrival> getArrivalTestData() {
+        return List.of(
+            StationArrival.builder()
+                          .run("123")
+                          .line(Line.RED)
+                          .destination("95th/Dan Ryan")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:00:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:05:00Z"))
+                          .due(true)
+                          .delayed(false)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("456")
+                          .line(Line.BROWN)
+                          .destination("Kimball")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:10:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:15:00Z"))
+                          .due(false)
+                          .delayed(true)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("789")
+                          .line(Line.PURPLE)
+                          .destination("Linden")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:20:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:25:00Z"))
+                          .due(false)
+                          .delayed(false)
+                          .scheduled(true)
+                          .build()
+        );
+    }
+
     @DisplayName("Test getArrivals returns arrivals")
     @Test
     void testGetArrivals() {
-        List<StationArrival> expected = List.of(
-            new StationArrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
-            new StationArrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false),
-            new StationArrival("417", Line.BROWN, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
-        );
+        List<StationArrival> expected = this.getArrivalTestData();
 
         ArrivalBody<StationArrival> body = new ArrivalBody<>(expected);
 
@@ -89,14 +125,50 @@ class TrainServiceTests {
                   .hasMessage("The List of arrivals is null for run 417");
     }
 
+    private List<StationArrival> getArrivalTestDataNA() {
+        return List.of(
+            StationArrival.builder()
+                          .run("123")
+                          .line(Line.RED)
+                          .destination("95th/Dan Ryan")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:00:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:05:00Z"))
+                          .due(true)
+                          .delayed(false)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("456")
+                          .line(Line.BROWN)
+                          .destination("Kimball")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:10:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:15:00Z"))
+                          .due(false)
+                          .delayed(true)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("789")
+                          .line(Line.N_A)
+                          .destination("Linden")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:20:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:25:00Z"))
+                          .due(false)
+                          .delayed(false)
+                          .scheduled(true)
+                          .build()
+        );
+    }
+
     @DisplayName("Test getArrivals filters N/A arrivals")
     @Test
     void testGetArrivalsNAFilter() {
-        List<StationArrival> arrivals = List.of(
-            new StationArrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
-            new StationArrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false),
-            new StationArrival("417", Line.N_A, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
-        );
+        List<StationArrival> arrivals = this.getArrivalTestDataNA();
 
         ArrivalBody<StationArrival>  body = new ArrivalBody<>(arrivals);
 
@@ -108,8 +180,29 @@ class TrainServiceTests {
         List<StationArrival> actual = this.service.getArrivals("417");
 
         Set<StationArrival> expected = Set.of(
-            new StationArrival("417", Line.BROWN, "Loop", "Paulina", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:55:09Z"), true, false, false),
-            new StationArrival("417", Line.BROWN, "Loop", "Southport", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:56:09Z"), false, true, false)
+            StationArrival.builder()
+                          .run("123")
+                          .line(Line.RED)
+                          .destination("95th/Dan Ryan")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:00:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:05:00Z"))
+                          .due(true)
+                          .delayed(false)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("456")
+                          .line(Line.BROWN)
+                          .destination("Kimball")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:10:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:15:00Z"))
+                          .due(false)
+                          .delayed(true)
+                          .scheduled(false)
+                          .build()
         );
 
         Assertions.assertThat(actual)

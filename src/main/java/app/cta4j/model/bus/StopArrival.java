@@ -5,9 +5,11 @@ import app.cta4j.model.serialization.StringToInstantConverter;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.Builder;
 
 import java.time.Instant;
 
+@Builder
 public record StopArrival(
     @JsonAlias("vid")
     String id,
