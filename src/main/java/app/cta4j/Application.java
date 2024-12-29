@@ -4,8 +4,9 @@ import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.bus.Direction;
 import app.cta4j.model.bus.Route;
 import app.cta4j.model.bus.Stop;
+import app.cta4j.model.bus.StopArrival;
 import app.cta4j.model.train.Station;
-import app.cta4j.model.train.TrainArrival;
+import app.cta4j.model.train.StationArrival;
 import app.cta4j.module.ApplicationModule;
 import app.cta4j.service.StationService;
 import app.cta4j.service.StopService;
@@ -46,14 +47,14 @@ public final class Application {
                .get("/api/stations/{stationId}/arrivals", ctx -> {
                    String stationId = ctx.pathParam("stationId");
 
-                   Set<TrainArrival> arrivals = stationService.getArrivals(stationId);
+                   Set<StationArrival> arrivals = stationService.getArrivals(stationId);
 
                    ctx.json(arrivals);
                })
                .get("/api/trains/{run}/arrivals", ctx -> {
                    String run = ctx.pathParam("run");
 
-                   List<TrainArrival> arrivals = trainService.getArrivals(run);
+                   List<StationArrival> arrivals = trainService.getArrivals(run);
 
                    ctx.json(arrivals);
                })
@@ -77,6 +78,15 @@ public final class Application {
                    Set<Stop> stops = stopService.getStops(routeId, direction);
 
                    ctx.json(stops);
+               })
+               .get("/api/routes/{routeId}/stops/{stopId}/arrivals", ctx -> {
+                   String routeId = ctx.pathParam("routeId");
+
+                   String stopId = ctx.pathParam("stopId");
+
+                   Set<StopArrival> arrivals = stopService.getArrivals(routeId, stopId);
+
+                   ctx.json(arrivals);
                })
                .exception(ResourceNotFoundException.class, (e, ctx) -> {
                    String message = e.getMessage();

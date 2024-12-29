@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TrainArrival(
+public record StationArrival(
         @JsonAlias("rn")
         String run,
 
@@ -47,7 +47,7 @@ public record TrainArrival(
         @JsonDeserialize(converter = StringToBooleanConverter.class)
         boolean delayed
 ) implements Arrival {
-    public TrainArrival {
+    public StationArrival {
         Objects.requireNonNull(run);
 
         Objects.requireNonNull(line);

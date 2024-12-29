@@ -1,6 +1,6 @@
 package app.cta4j.provider;
 
-import app.cta4j.client.TrainArrivalClient;
+import app.cta4j.client.StationArrivalClient;
 import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,17 +17,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class TrainArrivalClientProvider implements Provider<TrainArrivalClient> {
+public class StationArrivalClientProvider implements Provider<StationArrivalClient> {
     private final SecretCache secretCache;
 
     private static final Logger LOGGER;
 
     static {
-        LOGGER = LoggerFactory.getLogger(TrainArrivalClientProvider.class);
+        LOGGER = LoggerFactory.getLogger(StationArrivalClientProvider.class);
     }
 
     @Inject
-    public TrainArrivalClientProvider(SecretCache secretCache) {
+    public StationArrivalClientProvider(SecretCache secretCache) {
         this.secretCache = Objects.requireNonNull(secretCache);
     }
 
@@ -47,7 +47,7 @@ public class TrainArrivalClientProvider implements Provider<TrainArrivalClient> 
         } catch (JsonProcessingException e) {
             String message = e.getMessage();
 
-            TrainArrivalClientProvider.LOGGER.error(message);
+            StationArrivalClientProvider.LOGGER.error(message);
 
             throw new RuntimeException(e);
         }
@@ -56,7 +56,7 @@ public class TrainArrivalClientProvider implements Provider<TrainArrivalClient> 
     }
 
     @Override
-    public TrainArrivalClient get() {
+    public StationArrivalClient get() {
         JacksonDecoder decoder = new JacksonDecoder();
 
         Map<String, String> secrets = this.getSecrets();
@@ -71,6 +71,6 @@ public class TrainArrivalClientProvider implements Provider<TrainArrivalClient> 
         return Feign.builder()
                     .decoder(decoder)
                     .requestInterceptor(requestInterceptor)
-                    .target(TrainArrivalClient.class, "https://lapi.transitchicago.com/api/1.0");
+                    .target(StationArrivalClient.class, "https://lapi.transitchicago.com/api/1.0");
     }
 }
