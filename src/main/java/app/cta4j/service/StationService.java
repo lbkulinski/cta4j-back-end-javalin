@@ -23,17 +23,17 @@ public final class StationService {
 
     private final DSLContext context;
 
-    private final StationArrivalClient trainArrivalClient;
+    private final StationArrivalClient client;
 
     @Inject
-    public StationService(DSLContext context, StationArrivalClient trainArrivalClient) {
+    public StationService(DSLContext context, StationArrivalClient client) {
         this.cache = Caffeine.newBuilder()
                              .expireAfterWrite(24L, TimeUnit.HOURS)
                              .build(key -> this.loadStations());
 
         this.context = Objects.requireNonNull(context);
 
-        this.trainArrivalClient = Objects.requireNonNull(trainArrivalClient);
+        this.client = Objects.requireNonNull(client);
     }
 
     private Set<Station> loadStations() {
@@ -48,7 +48,7 @@ public final class StationService {
     }
 
     public Set<StationArrival> getArrivals(String stationId) {
-        ArrivalResponse<StationArrival> response = this.trainArrivalClient.getStationArrivals(stationId);
+        ArrivalResponse<StationArrival> response = this.client.getStationArrivals(stationId);
 
         if (response == null) {
             throw new RuntimeException("The arrival response is null for station ID %s".formatted(stationId));

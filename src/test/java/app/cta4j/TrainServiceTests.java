@@ -16,15 +16,15 @@ import java.util.List;
 import java.util.Set;
 
 class TrainServiceTests {
-    private StationArrivalClient trainArrivalClient;
+    private StationArrivalClient stationArrivalClient;
 
     private TrainService trainService;
 
     @BeforeEach
     void setUp() {
-        this.trainArrivalClient = Mockito.mock(StationArrivalClient.class);
+        this.stationArrivalClient = Mockito.mock(StationArrivalClient.class);
 
-        this.trainService = new TrainService(this.trainArrivalClient);
+        this.trainService = new TrainService(this.stationArrivalClient);
     }
 
     @Test
@@ -35,11 +35,11 @@ class TrainServiceTests {
             new StationArrival("417", Line.BROWN, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
         );
 
-        ArrivalBody body = new ArrivalBody(expected);
+        ArrivalBody<StationArrival> body = new ArrivalBody<>(expected);
 
-        ArrivalResponse response = new ArrivalResponse(body);
+        ArrivalResponse<StationArrival>  response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.stationArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         List<StationArrival> actual = this.trainService.getArrivals("417");
@@ -50,7 +50,7 @@ class TrainServiceTests {
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_response() {
-        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.stationArrivalClient.getTrainArrivals("417"))
                .thenReturn(null);
 
         Assertions.assertThatThrownBy(() -> this.trainService.getArrivals("417"))
@@ -60,9 +60,9 @@ class TrainServiceTests {
 
     @Test
     void testGetArrivals_throws_runtime_exception_with_null_body() {
-        ArrivalResponse response = new ArrivalResponse(null);
+        ArrivalResponse<StationArrival>  response = new ArrivalResponse<>(null);
 
-        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.stationArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.trainService.getArrivals("417"))
@@ -72,11 +72,11 @@ class TrainServiceTests {
 
     @Test
     void testGetArrivals_throws_resource_not_found_exception_with_null_arrivals() {
-        ArrivalBody body = new ArrivalBody(null);
+        ArrivalBody<StationArrival>  body = new ArrivalBody<>(null);
 
-        ArrivalResponse response = new ArrivalResponse(body);
+        ArrivalResponse<StationArrival>  response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.stationArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.trainService.getArrivals("417"))
@@ -92,11 +92,11 @@ class TrainServiceTests {
             new StationArrival("417", Line.N_A, "Loop", "Belmont", Instant.parse("2024-12-22T21:54:09Z"), Instant.parse("2024-12-22T21:59:09Z"), false, false, true)
         );
 
-        ArrivalBody body = new ArrivalBody(arrivals);
+        ArrivalBody<StationArrival>  body = new ArrivalBody<>(arrivals);
 
-        ArrivalResponse response = new ArrivalResponse(body);
+        ArrivalResponse<StationArrival>  response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.trainArrivalClient.getTrainArrivals("417"))
+        Mockito.when(this.stationArrivalClient.getTrainArrivals("417"))
                .thenReturn(response);
 
         List<StationArrival> actual = this.trainService.getArrivals("417");

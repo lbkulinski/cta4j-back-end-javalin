@@ -26,16 +26,22 @@ public final class StopService {
 
     private final Cache<String, Set<Direction>> directionCache;
 
-    private record RouteDirection(String routeId, String direction) {}
+    private record RouteDirection(String routeId, String direction) {
+        public RouteDirection {
+            Objects.requireNonNull(routeId);
+
+            Objects.requireNonNull(direction);
+        }
+    }
 
     private final Cache<RouteDirection, Set<Stop>> stopCache;
 
     private final DSLContext context;
 
-    private final StopArrivalClient stopArrivalClient;
+    private final StopArrivalClient client;
 
     @Inject
-    public StopService(DSLContext context, StopArrivalClient stopArrivalClient) {
+    public StopService(DSLContext context, StopArrivalClient client) {
         this.routeCache = Caffeine.newBuilder()
                                   .expireAfterWrite(24L, TimeUnit.HOURS)
                                   .build(key -> this.loadRoutes());
@@ -50,7 +56,7 @@ public final class StopService {
 
         this.context = Objects.requireNonNull(context);
 
-        this.stopArrivalClient = Objects.requireNonNull(stopArrivalClient);
+        this.client = Objects.requireNonNull(client);
     }
 
     private Set<Route> loadRoutes() {
@@ -79,7 +85,11 @@ public final class StopService {
         return this.directionCache.get(routeId, this::loadDirections);
     }
 
-    private Set<Stop> loadStops(String routeId, String direction) {
+    private Set<Stop> loadStops(RouteDirection key) {
+        String routeId = key.routeId();
+
+        String direction = key.direction();
+
         List<Stop> stops = this.context.select(Tables.STOP.ID, Tables.STOP.NAME)
                                        .from(Tables.STOP)
                                        .join(Tables.ROUTE_STOP)
@@ -94,11 +104,13 @@ public final class StopService {
     }
 
     public Set<Stop> getStops(String routeId, String direction) {
-        return this.stopCache.get(new RouteDirection(routeId, direction), key -> this.loadStops(routeId, direction));
+        RouteDirection key = new RouteDirection(routeId, direction);
+
+        return this.stopCache.get(key, this::loadStops);
     }
 
     public Set<StopArrival> getArrivals(String routeId, String stopId) {
-        ArrivalResponse<StopArrival> response = this.stopArrivalClient.getStopArrivals(routeId, stopId);
+        ArrivalResponse<StopArrival> response = this.client.getStopArrivals(routeId, stopId);
 
         if (response == null) {
             throw new RuntimeException("""
