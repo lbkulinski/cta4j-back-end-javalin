@@ -43,9 +43,20 @@ class StationServiceTests {
     @Test
     void testGetStationsCached() throws NoSuchFieldException, IllegalAccessException {
         Set<Station> expected = Set.of(
-            new Station("41320", "Belmont (Red, Brown & Purple lines)"),
-            new Station("41160", "Clinton (Green & Pink lines)"),
-            new Station("40710", "Chicago (Brown & Purple lines)")
+            Station.builder()
+                   .id("41320")
+                   .name("Belmont (Red, Brown & Purple lines)")
+                   .build(),
+
+            Station.builder()
+                   .id("41160")
+                   .name("Clinton (Green & Pink lines)")
+                   .build(),
+
+            Station.builder()
+                   .id("40710")
+                   .name("Chicago (Brown & Purple lines)")
+                   .build()
         );
 
         @SuppressWarnings("unchecked")
@@ -70,9 +81,20 @@ class StationServiceTests {
     @Test
     void testGetStationsDatabase() {
         Set<Station> expected = Set.of(
-            new Station("41320", "Belmont (Red, Brown & Purple lines)"),
-            new Station("41160", "Clinton (Green & Pink lines)"),
-            new Station("40710", "Chicago (Brown & Purple lines)")
+            Station.builder()
+                   .id("41320")
+                   .name("Belmont (Red, Brown & Purple lines)")
+                   .build(),
+
+            Station.builder()
+                   .id("41160")
+                   .name("Clinton (Green & Pink lines)")
+                   .build(),
+
+            Station.builder()
+                   .id("40710")
+                   .name("Chicago (Brown & Purple lines)")
+                   .build()
         );
 
         @SuppressWarnings("unchecked")
@@ -90,23 +112,61 @@ class StationServiceTests {
                   .containsExactlyInAnyOrderElementsOf(expected);
     }
 
+    private List<StationArrival> getArrivalTestData() {
+        return List.of(
+            StationArrival.builder()
+                          .run("123")
+                          .line(Line.RED)
+                          .destination("95th/Dan Ryan")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:00:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:05:00Z"))
+                          .due(true)
+                          .delayed(false)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("456")
+                          .line(Line.BROWN)
+                          .destination("Kimball")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:10:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:15:00Z"))
+                          .due(false)
+                          .delayed(true)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("789")
+                          .line(Line.PURPLE)
+                          .destination("Linden")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:20:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:25:00Z"))
+                          .due(false)
+                          .delayed(false)
+                          .scheduled(true)
+                          .build()
+        );
+    }
+
     @DisplayName("Test getArrivals returns arrivals")
     @Test
     void testGetArrivals() {
-        List<StationArrival> expected = List.of(
-            new StationArrival("123", Line.RED, "95th/Dan Ryan", "Belmont", Instant.parse("2021-09-01T12:00:00Z"), Instant.parse("2021-09-01T12:05:00Z"), true, false, false),
-            new StationArrival("456", Line.BROWN, "Kimball", "Belmont", Instant.parse("2021-09-01T12:10:00Z"), Instant.parse("2021-09-01T12:15:00Z"), false, true, false),
-            new StationArrival("789", Line.PURPLE, "Linden", "Belmont", Instant.parse("2021-09-01T12:20:00Z"), Instant.parse("2021-09-01T12:25:00Z"), false, false, true)
-        );
+        String stationId = "41320";
+
+        List<StationArrival> expected = this.getArrivalTestData();
 
         ArrivalBody<StationArrival> body = new ArrivalBody<>(expected);
 
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.client.getStationArrivals("41320"))
+        Mockito.when(this.client.getStationArrivals(stationId))
                .thenReturn(response);
 
-        Set<StationArrival> actual = this.service.getArrivals("41320");
+        Set<StationArrival> actual = this.service.getArrivals(stationId);
 
         Assertions.assertThat(actual)
                   .hasSameElementsAs(expected);
@@ -115,63 +175,128 @@ class StationServiceTests {
     @DisplayName("Test getArrivals throws runtime exception with null response")
     @Test
     void testGetArrivalsThrowsExceptionNullResponse() {
-        Mockito.when(this.client.getStationArrivals("41320"))
+        String stationId = "41320";
+
+        Mockito.when(this.client.getStationArrivals(stationId))
                .thenReturn(null);
 
-        Assertions.assertThatThrownBy(() -> this.service.getArrivals("41320"))
+        Assertions.assertThatThrownBy(() -> this.service.getArrivals(stationId))
                   .isInstanceOf(RuntimeException.class)
-                  .hasMessage("The arrival response is null for station ID 41320");
+                  .hasMessage("The arrival response is null for station ID %s".formatted(stationId));
     }
 
     @DisplayName("Test getArrivals throws runtime exception with null body")
     @Test
     void testGetArrivalsThrowsExceptionNullBody() {
+        String stationId = "41320";
+
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(null);
 
-        Mockito.when(this.client.getStationArrivals("41320"))
+        Mockito.when(this.client.getStationArrivals(stationId))
                .thenReturn(response);
 
-        Assertions.assertThatThrownBy(() -> this.service.getArrivals("41320"))
+        Assertions.assertThatThrownBy(() -> this.service.getArrivals(stationId))
                   .isInstanceOf(RuntimeException.class)
-                  .hasMessage("The arrival body is null for station ID 41320");
+                  .hasMessage("The arrival body is null for station ID %s".formatted(stationId));
     }
 
     @DisplayName("Test getArrivals throws resource not found exception with null arrivals")
     @Test
     void testGetArrivalsNotFound() {
+        String stationId = "41320";
+
         ArrivalBody<StationArrival> body = new ArrivalBody<>(null);
 
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.client.getStationArrivals("41320"))
+        Mockito.when(this.client.getStationArrivals(stationId))
                .thenReturn(response);
 
-        Assertions.assertThatThrownBy(() -> this.service.getArrivals("41320"))
+        Assertions.assertThatThrownBy(() -> this.service.getArrivals(stationId))
                   .isInstanceOf(ResourceNotFoundException.class)
-                  .hasMessage("The List of arrivals is null for station ID 41320");
+                  .hasMessage("The List of arrivals is null for station ID %s".formatted(stationId));
+    }
+
+    private List<StationArrival> getArrivalTestDataNA() {
+        return List.of(
+            StationArrival.builder()
+                          .run("123")
+                          .line(Line.RED)
+                          .destination("95th/Dan Ryan")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:00:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:05:00Z"))
+                          .due(true)
+                          .delayed(false)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("456")
+                          .line(Line.BROWN)
+                          .destination("Kimball")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:10:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:15:00Z"))
+                          .due(false)
+                          .delayed(true)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("789")
+                          .line(Line.N_A)
+                          .destination("Linden")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:20:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:25:00Z"))
+                          .due(false)
+                          .delayed(false)
+                          .scheduled(true)
+                          .build()
+        );
     }
 
     @DisplayName("Test getArrivals filters N/A arrivals")
     @Test
     void testGetArrivalsNAFilter() {
-        List<StationArrival> arrivals = List.of(
-            new StationArrival("123", Line.RED, "95th/Dan Ryan", "Belmont", Instant.parse("2021-09-01T12:00:00Z"), Instant.parse("2021-09-01T12:05:00Z"), true, false, false),
-            new StationArrival("456", Line.BROWN, "Kimball", "Belmont", Instant.parse("2021-09-01T12:10:00Z"), Instant.parse("2021-09-01T12:15:00Z"), false, true, false),
-            new StationArrival("789", Line.N_A, "Linden", "Belmont", Instant.parse("2021-09-01T12:20:00Z"), Instant.parse("2021-09-01T12:25:00Z"), false, false, true)
-        );
+        String stationId = "41320";
+
+        List<StationArrival> arrivals = this.getArrivalTestDataNA();
 
         ArrivalBody<StationArrival> body = new ArrivalBody<>(arrivals);
 
         ArrivalResponse<StationArrival> response = new ArrivalResponse<>(body);
 
-        Mockito.when(this.client.getStationArrivals("41320"))
+        Mockito.when(this.client.getStationArrivals(stationId))
                .thenReturn(response);
 
-        Set<StationArrival> actual = this.service.getArrivals("41320");
+        Set<StationArrival> actual = this.service.getArrivals(stationId);
 
         Set<StationArrival> expected = Set.of(
-            new StationArrival("123", Line.RED, "95th/Dan Ryan", "Belmont", Instant.parse("2021-09-01T12:00:00Z"), Instant.parse("2021-09-01T12:05:00Z"), true, false, false),
-            new StationArrival("456", Line.BROWN, "Kimball", "Belmont", Instant.parse("2021-09-01T12:10:00Z"), Instant.parse("2021-09-01T12:15:00Z"), false, true, false)
+            StationArrival.builder()
+                          .run("123")
+                          .line(Line.RED)
+                          .destination("95th/Dan Ryan")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:00:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:05:00Z"))
+                          .due(true)
+                          .delayed(false)
+                          .scheduled(false)
+                          .build(),
+
+            StationArrival.builder()
+                          .run("456")
+                          .line(Line.BROWN)
+                          .destination("Kimball")
+                          .station("Belmont")
+                          .predictionTime(Instant.parse("2021-09-01T12:10:00Z"))
+                          .arrivalTime(Instant.parse("2021-09-01T12:15:00Z"))
+                          .due(false)
+                          .delayed(true)
+                          .scheduled(false)
+                          .build()
         );
 
         Assertions.assertThat(actual)

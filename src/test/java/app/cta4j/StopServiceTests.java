@@ -20,9 +20,7 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -47,9 +45,20 @@ class StopServiceTests {
     @Test
     void testGetRoutesCached() throws Exception {
         Set<Route> expected = Set.of(
-            new Route("22", "Clark"),
-            new Route("36", "Broadway"),
-            new Route("151", "Sheridan")
+            Route.builder()
+                 .id("22")
+                 .name("Clark")
+                 .build(),
+
+            Route.builder()
+                 .id("36")
+                 .name("Broadway")
+                 .build(),
+
+            Route.builder()
+                 .id("151")
+                 .name("Sheridan")
+                 .build()
         );
 
         @SuppressWarnings("unchecked")
@@ -74,9 +83,20 @@ class StopServiceTests {
     @Test
     void testGetRoutesDatabase() {
         Set<Route> expected = Set.of(
-            new Route("22", "Clark"),
-            new Route("36", "Broadway"),
-            new Route("151", "Sheridan")
+            Route.builder()
+                 .id("22")
+                 .name("Clark")
+                 .build(),
+
+            Route.builder()
+                 .id("36")
+                 .name("Broadway")
+                 .build(),
+
+            Route.builder()
+                 .id("151")
+                 .name("Sheridan")
+                 .build()
         );
 
         @SuppressWarnings("unchecked")
@@ -175,9 +195,20 @@ class StopServiceTests {
     @Test
     void testGetStopsCached() throws Exception {
         Set<Stop> expected = Set.of(
-            new Stop("1827", "Clark & School/Aldine"),
-            new Stop("1856", "Clark & Chicago"),
-            new Stop("15895", "Clark & Harrison")
+            Stop.builder()
+                .id("1827")
+                .name("Clark & School/Aldine")
+                .build(),
+
+            Stop.builder()
+                .id("1856")
+                .name("Clark & Chicago")
+                .build(),
+
+            Stop.builder()
+                .id("15895")
+                .name("Clark & Harrison")
+                .build()
         );
 
         @SuppressWarnings("unchecked")
@@ -214,9 +245,20 @@ class StopServiceTests {
     @Test
     void testGetStopsDatabase() {
         Set<Stop> expected = Set.of(
-            new Stop("1827", "Clark & School/Aldine"),
-            new Stop("1856", "Clark & Chicago"),
-            new Stop("15895", "Clark & Harrison")
+            Stop.builder()
+                .id("1827")
+                .name("Clark & School/Aldine")
+                .build(),
+
+            Stop.builder()
+                .id("1856")
+                .name("Clark & Chicago")
+                .build(),
+
+            Stop.builder()
+                .id("15895")
+                .name("Clark & Harrison")
+                .build()
         );
 
         @SuppressWarnings("unchecked")
@@ -284,9 +326,38 @@ class StopServiceTests {
     @Test
     void testGetArrivals() {
         List<StopArrival> expected = List.of(
-            new StopArrival("4168", StopEventType.ARRIVAL, "Clark & School/Aldine", "22", "Harrison", Instant.parse("2024-12-29T17:24:00Z"), Instant.parse("2024-12-29T17:35:00Z"), false),
-            new StopArrival("4351", StopEventType.ARRIVAL, "Clark & School/Aldine", "22", "Harrison", Instant.parse("2024-12-29T17:24:00Z"), Instant.parse("2024-12-29T17:35:00Z"), false),
-            new StopArrival("4399", StopEventType.ARRIVAL, "Clark & School/Aldine", "22", "Harrison", Instant.parse("2024-12-29T17:24:00Z"), Instant.parse("2024-12-29T17:47:00Z"), true)
+            StopArrival.builder()
+                       .id("4168")
+                       .type(StopEventType.ARRIVAL)
+                       .stop("Clark & School/Aldine")
+                       .route("22")
+                       .destination("Harrison")
+                       .predictionTime(Instant.parse("2024-12-29T17:24:00Z"))
+                       .arrivalTime(Instant.parse("2024-12-29T17:35:00Z"))
+                       .delayed(false)
+                       .build(),
+
+            StopArrival.builder()
+                       .id("4351")
+                       .type(StopEventType.ARRIVAL)
+                       .stop("Clark & School/Aldine")
+                       .route("22")
+                       .destination("Harrison")
+                       .predictionTime(Instant.parse("2024-12-29T17:24:00Z"))
+                       .arrivalTime(Instant.parse("2024-12-29T17:35:00Z"))
+                       .delayed(false)
+                       .build(),
+
+            StopArrival.builder()
+                       .id("4399")
+                       .type(StopEventType.ARRIVAL)
+                       .stop("Clark & School/Aldine")
+                       .route("22")
+                       .destination("Harrison")
+                       .predictionTime(Instant.parse("2024-12-29T17:24:00Z"))
+                       .arrivalTime(Instant.parse("2024-12-29T17:47:00Z"))
+                       .delayed(true)
+                       .build()
         );
 
         ArrivalBody<StopArrival> body = new ArrivalBody<>(expected);
