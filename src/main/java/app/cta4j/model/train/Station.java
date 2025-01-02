@@ -1,7 +1,10 @@
-package app.cta4j.model;
+package app.cta4j.model.train;
+
+import lombok.Builder;
 
 import java.util.Objects;
 
+@Builder
 public record Station(
     String id,
 
