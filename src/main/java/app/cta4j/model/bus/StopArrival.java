@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Builder
 public record StopArrival(
@@ -39,4 +40,19 @@ public record StopArrival(
     @JsonAlias("dly")
     boolean delayed
 ) implements Arrival {
+    public StopArrival {
+        Objects.requireNonNull(id);
+
+        Objects.requireNonNull(type);
+
+        Objects.requireNonNull(stop);
+
+        Objects.requireNonNull(route);
+
+        Objects.requireNonNull(destination);
+
+        Objects.requireNonNull(predictionTime);
+
+        Objects.requireNonNull(arrivalTime);
+    }
 }

@@ -14,6 +14,8 @@ public record Stop(
     String name
 ) {
     public Stop {
+        Objects.requireNonNull(id);
+
         Objects.requireNonNull(name);
     }
 }
