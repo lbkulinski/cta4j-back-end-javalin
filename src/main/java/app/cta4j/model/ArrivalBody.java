@@ -10,7 +10,4 @@ import java.util.Objects;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ArrivalBody<T extends Arrival>(@JsonAlias(value = {"eta", "prd"}) List<T> arrivals) {
-    public ArrivalBody {
-        Objects.requireNonNull(arrivals);
-    }
 }

@@ -2,19 +2,19 @@ package app.cta4j.service;
 
 import app.cta4j.client.StopArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
-import app.cta4j.jooq.Tables;
 import app.cta4j.model.ArrivalBody;
 import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.Direction;
 import app.cta4j.model.bus.Route;
 import app.cta4j.model.bus.Stop;
 import app.cta4j.model.bus.StopArrival;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
-import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
+import redis.clients.jedis.UnifiedJedis;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +22,11 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public final class StopService {
-    private final LoadingCache<String, Set<Route>> routeCache;
+    private final UnifiedJedis jedis;
+
+    private final ObjectMapper mapper;
+
+    private final Cache<String, Set<Route>> routeCache;
 
     private final Cache<String, Set<Direction>> directionCache;
 
@@ -36,15 +40,17 @@ public final class StopService {
 
     private final Cache<RouteDirection, Set<Stop>> stopCache;
 
-    private final DSLContext context;
-
     private final StopArrivalClient client;
 
     @Inject
-    public StopService(DSLContext context, StopArrivalClient client) {
+    public StopService(UnifiedJedis jedis, ObjectMapper mapper, StopArrivalClient client) {
+        this.jedis = Objects.requireNonNull(jedis);
+
+        this.mapper = Objects.requireNonNull(mapper);
+
         this.routeCache = Caffeine.newBuilder()
                                   .expireAfterWrite(24L, TimeUnit.HOURS)
-                                  .build(key -> this.loadRoutes());
+                                  .build();
 
         this.directionCache = Caffeine.newBuilder()
                                       .expireAfterWrite(24L, TimeUnit.HOURS)
@@ -54,29 +60,55 @@ public final class StopService {
                                  .expireAfterWrite(24L, TimeUnit.HOURS)
                                  .build();
 
-        this.context = Objects.requireNonNull(context);
-
         this.client = Objects.requireNonNull(client);
     }
 
     private Set<Route> loadRoutes() {
-        List<Route> routes = this.context.selectFrom(Tables.ROUTE)
-                                         .fetchInto(Route.class);
+        String routesJson = this.jedis.get("routes");
+
+        if (routesJson == null) {
+            throw new ResourceNotFoundException("The routes JSON is null");
+        }
+
+        TypeReference<List<Route>> type = new TypeReference<>() {};
+
+        List<Route> routes;
+
+        try {
+            routes = this.mapper.readValue(routesJson, type);
+        } catch (Exception e) {
+            String message = e.getMessage();
+
+            throw new RuntimeException(message);
+        }
 
         return Set.copyOf(routes);
     }
 
     public Set<Route> getRoutes() {
-        return this.routeCache.get("routes");
+        return this.routeCache.get("routes", key -> this.loadRoutes());
     }
 
     private Set<Direction> loadDirections(String routeId) {
-        List<Direction> directions = this.context.select(DSL.upper(Tables.DIRECTION.NAME))
-                                                 .from(Tables.DIRECTION)
-                                                 .join(Tables.ROUTE_DIRECTION)
-                                                 .on(Tables.DIRECTION.ID.eq(Tables.ROUTE_DIRECTION.DIRECTION_ID))
-                                                 .where(Tables.ROUTE_DIRECTION.ROUTE_ID.eq(routeId))
-                                                 .fetchInto(Direction.class);
+        String key = "route:%s:directions".formatted(routeId);
+
+        String directionsJson = this.jedis.get(key);
+
+        if (directionsJson == null) {
+            throw new ResourceNotFoundException("The directions JSON is null for route ID %s".formatted(routeId));
+        }
+
+        TypeReference<List<Direction>> type = new TypeReference<>() {};
+
+        List<Direction> directions;
+
+        try {
+            directions = this.mapper.readValue(directionsJson, type);
+        } catch (Exception e) {
+            String message = e.getMessage();
+
+            throw new RuntimeException(message);
+        }
 
         return Set.copyOf(directions);
     }
@@ -90,15 +122,26 @@ public final class StopService {
 
         String direction = key.direction();
 
-        List<Stop> stops = this.context.select(Tables.STOP.ID, Tables.STOP.NAME)
-                                       .from(Tables.STOP)
-                                       .join(Tables.ROUTE_STOP)
-                                       .on(Tables.STOP.ID.eq(Tables.ROUTE_STOP.STOP_ID))
-                                       .join(Tables.DIRECTION)
-                                       .on(Tables.ROUTE_STOP.DIRECTION_ID.eq(Tables.DIRECTION.ID))
-                                       .where(Tables.ROUTE_STOP.ROUTE_ID.eq(routeId))
-                                       .and(Tables.DIRECTION.NAME.eq(direction))
-                                       .fetchInto(Stop.class);
+        String keyString = "route:%s:direction:%s:stops".formatted(routeId, direction);
+
+        String stopsJson = this.jedis.get(keyString);
+
+        if (stopsJson == null) {
+            throw new ResourceNotFoundException("""
+            The stops JSON is null for route ID %s and direction %s""".formatted(routeId, direction));
+        }
+
+        TypeReference<List<Stop>> type = new TypeReference<>() {};
+
+        List<Stop> stops;
+
+        try {
+            stops = this.mapper.readValue(stopsJson, type);
+        } catch (Exception e) {
+            String message = e.getMessage();
+
+            throw new RuntimeException(message);
+        }
 
         return Set.copyOf(stops);
     }
