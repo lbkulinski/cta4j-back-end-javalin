@@ -26,7 +26,7 @@ public final class StopService {
 
     private final ObjectMapper mapper;
 
-    private final LoadingCache<String, Set<Route>> routeCache;
+    private final Cache<String, Set<Route>> routeCache;
 
     private final Cache<String, Set<Direction>> directionCache;
 
@@ -50,7 +50,7 @@ public final class StopService {
 
         this.routeCache = Caffeine.newBuilder()
                                   .expireAfterWrite(24L, TimeUnit.HOURS)
-                                  .build(key -> this.loadRoutes());
+                                  .build();
 
         this.directionCache = Caffeine.newBuilder()
                                       .expireAfterWrite(24L, TimeUnit.HOURS)
@@ -86,7 +86,7 @@ public final class StopService {
     }
 
     public Set<Route> getRoutes() {
-        return this.routeCache.get("routes");
+        return this.routeCache.get("routes", key -> this.loadRoutes());
     }
 
     private Set<Direction> loadDirections(String routeId) {

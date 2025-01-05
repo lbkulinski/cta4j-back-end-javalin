@@ -9,6 +9,7 @@ import app.cta4j.model.train.StationArrival;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
@@ -25,7 +26,7 @@ public final class StationService {
 
     private final ObjectMapper mapper;
 
-    private final LoadingCache<String, Set<Station>> cache;
+    private final Cache<String, Set<Station>> cache;
 
     private final StationArrivalClient client;
 
@@ -37,7 +38,7 @@ public final class StationService {
 
         this.cache = Caffeine.newBuilder()
                              .expireAfterWrite(24L, TimeUnit.HOURS)
-                             .build(key -> this.loadStations());
+                             .build();
 
         this.client = Objects.requireNonNull(client);
     }
@@ -65,7 +66,7 @@ public final class StationService {
     }
 
     public Set<Station> getStations() {
-        return this.cache.get("stations");
+        return this.cache.get("stations", key -> this.loadStations());
     }
 
     public Set<StationArrival> getArrivals(String stationId) {
