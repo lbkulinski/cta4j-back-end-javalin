@@ -2,29 +2,31 @@ package app.cta4j;
 
 import app.cta4j.client.StationArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
-import app.cta4j.jooq.Tables;
-import app.cta4j.jooq.tables.records.StationRecord;
 import app.cta4j.model.*;
 import app.cta4j.model.train.Line;
 import app.cta4j.model.train.Station;
 import app.cta4j.model.train.StationArrival;
 import app.cta4j.service.StationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.assertj.core.api.Assertions;
-import org.jooq.DSLContext;
-import org.jooq.SelectWhereStep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import redis.clients.jedis.UnifiedJedis;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 class StationServiceTests {
-    private DSLContext context;
+    private UnifiedJedis jedis;
+
+    private ObjectMapper mapper;
 
     private StationArrivalClient client;
 
@@ -32,11 +34,13 @@ class StationServiceTests {
 
     @BeforeEach
     void setUp() {
-        this.context = Mockito.mock(DSLContext.class);
+        this.jedis = Mockito.mock(UnifiedJedis.class);
+
+        this.mapper = new ObjectMapper();
 
         this.client = Mockito.mock(StationArrivalClient.class);
 
-        this.service = new StationService(this.context, this.client);
+        this.service = new StationService(this.jedis, this.mapper, this.client);
     }
 
     @DisplayName("Test getStations returns cached stations")
@@ -60,7 +64,7 @@ class StationServiceTests {
         );
 
         @SuppressWarnings("unchecked")
-        LoadingCache<String, Set<Station>> cache = Mockito.mock(LoadingCache.class);
+        Cache<String, Set<Station>> cache = Mockito.mock(Cache.class);
 
         Field cacheField = StationService.class.getDeclaredField("cache");
 
@@ -68,10 +72,12 @@ class StationServiceTests {
 
         cacheField.set(this.service, cache);
 
-        Mockito.when(cache.get("stations"))
+        Mockito.when(cache.get(Mockito.eq("stations"), Mockito.any(Function.class)))
                .thenReturn(expected);
 
         Set<Station> actual = this.service.getStations();
+
+        System.out.println(actual);
 
         Assertions.assertThat(actual)
                   .containsExactlyInAnyOrderElementsOf(expected);
@@ -97,14 +103,16 @@ class StationServiceTests {
                    .build()
         );
 
-        @SuppressWarnings("unchecked")
-        SelectWhereStep<StationRecord> selectWhereStep = Mockito.mock(SelectWhereStep.class);
+        String expectedJson;
 
-        Mockito.when(this.context.selectFrom(Tables.STATION))
-               .thenReturn(selectWhereStep);
+        try {
+            expectedJson = this.mapper.writeValueAsString(expected);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-        Mockito.when(selectWhereStep.fetchInto(Station.class))
-               .thenReturn(List.copyOf(expected));
+        Mockito.when(this.jedis.get("stations"))
+               .thenReturn(expectedJson);
 
         Set<Station> actual = this.service.getStations();
 

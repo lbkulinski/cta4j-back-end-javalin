@@ -2,31 +2,31 @@ package app.cta4j;
 
 import app.cta4j.client.StopArrivalClient;
 import app.cta4j.exception.ResourceNotFoundException;
-import app.cta4j.jooq.Tables;
-import app.cta4j.jooq.tables.records.RouteRecord;
 import app.cta4j.model.ArrivalBody;
 import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.*;
 import app.cta4j.service.StopService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.assertj.core.api.Assertions;
-import org.jooq.*;
-import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import redis.clients.jedis.UnifiedJedis;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 class StopServiceTests {
-    private DSLContext context;
+    private UnifiedJedis jedis;
+
+    private ObjectMapper mapper;
 
     private StopArrivalClient client;
 
@@ -34,11 +34,13 @@ class StopServiceTests {
 
     @BeforeEach
     void setUp() {
-        this.context = Mockito.mock(DSLContext.class);
+        this.jedis = Mockito.mock(UnifiedJedis.class);
+
+        this.mapper = new ObjectMapper();
 
         this.client = Mockito.mock(StopArrivalClient.class);
 
-        this.service = new StopService(this.context, this.client);
+        this.service = new StopService(this.jedis, this.mapper, this.client);
     }
 
     @DisplayName("Test getRoutes returns cached routes")
@@ -62,7 +64,7 @@ class StopServiceTests {
         );
 
         @SuppressWarnings("unchecked")
-        LoadingCache<String, Set<Route>> cache = Mockito.mock(LoadingCache.class);
+        Cache<String, Set<Route>> cache = Mockito.mock(Cache.class);
 
         Field cacheField = StopService.class.getDeclaredField("routeCache");
 
@@ -70,7 +72,7 @@ class StopServiceTests {
 
         cacheField.set(this.service, cache);
 
-        Mockito.when(cache.get("routes"))
+        Mockito.when(cache.get(Mockito.eq("routes"), Mockito.any(Function.class)))
                .thenReturn(expected);
 
         Set<Route> actual = this.service.getRoutes();
@@ -99,14 +101,16 @@ class StopServiceTests {
                  .build()
         );
 
-        @SuppressWarnings("unchecked")
-        SelectWhereStep<RouteRecord> selectWhereStep = Mockito.mock(SelectWhereStep.class);
+        String expectedJson;
 
-        Mockito.when(this.context.selectFrom(Tables.ROUTE))
-               .thenReturn(selectWhereStep);
+        try {
+            expectedJson = this.mapper.writeValueAsString(expected);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-        Mockito.when(selectWhereStep.fetchInto(Route.class))
-               .thenReturn(List.copyOf(expected));
+        Mockito.when(this.jedis.get("routes"))
+               .thenReturn(expectedJson);
 
         Set<Route> actual = this.service.getRoutes();
 
@@ -150,40 +154,20 @@ class StopServiceTests {
             Direction.SOUTHBOUND
         );
 
-        @SuppressWarnings("unchecked")
-        SelectSelectStep<Record1<String>> selectSelectStep = Mockito.mock(SelectSelectStep.class);
-
-        Mockito.when(this.context.select(DSL.upper(Tables.DIRECTION.NAME)))
-               .thenReturn(selectSelectStep);
-
-        @SuppressWarnings("unchecked")
-        SelectJoinStep<Record1<String>> selectJoinStep = Mockito.mock(SelectJoinStep.class);
-
-        Mockito.when(selectSelectStep.from(Tables.DIRECTION))
-               .thenReturn(selectJoinStep);
-
-        @SuppressWarnings("unchecked")
-        SelectOnStep<Record1<String>> selectOnStep = Mockito.mock(SelectOnStep.class);
-
-        Mockito.when(selectJoinStep.join(Tables.ROUTE_DIRECTION))
-               .thenReturn(selectOnStep);
-
-        @SuppressWarnings("unchecked")
-        SelectOnConditionStep<Record1<String>> selectOnConditionStep = Mockito.mock(SelectOnConditionStep.class);
-
-        Mockito.when(selectOnStep.on(Tables.DIRECTION.ID.eq(Tables.ROUTE_DIRECTION.DIRECTION_ID)))
-               .thenReturn(selectOnConditionStep);
-
-        @SuppressWarnings("unchecked")
-        SelectConditionStep<Record1<String>> selectConditionStep = Mockito.mock(SelectConditionStep.class);
-
-        Mockito.when(selectOnConditionStep.where(Tables.ROUTE_DIRECTION.ROUTE_ID.eq("22")))
-               .thenReturn(selectConditionStep);
-
-        Mockito.when(selectConditionStep.fetchInto(Direction.class))
-               .thenReturn(List.copyOf(expected));
-
         String routeId = "22";
+
+        String key = "route:%s:directions".formatted(routeId);
+
+        String expectedJson;
+
+        try {
+            expectedJson = this.mapper.writeValueAsString(expected);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Mockito.when(this.jedis.get(key))
+               .thenReturn(expectedJson);
 
         Set<Direction> actual = this.service.getDirections(routeId);
 
@@ -198,16 +182,22 @@ class StopServiceTests {
             Stop.builder()
                 .id("1827")
                 .name("Clark & School/Aldine")
+                .latitude(BigDecimal.valueOf(41.941975))
+                .longitude(BigDecimal.valueOf(-87.652198000001))
                 .build(),
 
             Stop.builder()
                 .id("1856")
                 .name("Clark & Chicago")
+                .latitude(BigDecimal.valueOf(41.89683))
+                .longitude(BigDecimal.valueOf(-87.631334999999))
                 .build(),
 
             Stop.builder()
                 .id("15895")
                 .name("Clark & Harrison")
+                .latitude(BigDecimal.valueOf(41.873980999999))
+                .longitude(BigDecimal.valueOf(-87.630738))
                 .build()
         );
 
@@ -220,15 +210,15 @@ class StopServiceTests {
 
         cacheField.set(this.service, cache);
 
-        String routeId = "22";
-
-        String direction = "Southbound";
-
         Class<?> clazz = StopService.class.getDeclaredClasses()[0];
 
         Constructor<?> constructor = clazz.getDeclaredConstructor(String.class, String.class);
 
         constructor.setAccessible(true);
+
+        String routeId = "22";
+
+        String direction = "Southbound";
 
         Object key = constructor.newInstance(routeId, direction);
 
@@ -248,73 +238,41 @@ class StopServiceTests {
             Stop.builder()
                 .id("1827")
                 .name("Clark & School/Aldine")
+                .latitude(BigDecimal.valueOf(41.941975))
+                .longitude(BigDecimal.valueOf(-87.652198000001))
                 .build(),
 
             Stop.builder()
                 .id("1856")
                 .name("Clark & Chicago")
+                .latitude(BigDecimal.valueOf(41.89683))
+                .longitude(BigDecimal.valueOf(-87.631334999999))
                 .build(),
 
             Stop.builder()
                 .id("15895")
                 .name("Clark & Harrison")
+                .latitude(BigDecimal.valueOf(41.873980999999))
+                .longitude(BigDecimal.valueOf(-87.630738))
                 .build()
         );
 
-        @SuppressWarnings("unchecked")
-        SelectSelectStep<Record2<Integer, String>> selectSelectStep = Mockito.mock(SelectSelectStep.class);
+        String expectedJson;
 
-        Mockito.when(this.context.select(Tables.STOP.ID, Tables.STOP.NAME))
-               .thenReturn(selectSelectStep);
-
-        @SuppressWarnings("unchecked")
-        SelectJoinStep<Record2<Integer, String>> selectJoinStep = Mockito.mock(SelectJoinStep.class);
-
-        Mockito.when(selectSelectStep.from(Tables.STOP))
-               .thenReturn(selectJoinStep);
-
-        @SuppressWarnings("unchecked")
-        SelectOnStep<Record2<Integer, String>> selectOnStep0 = Mockito.mock(SelectOnStep.class);
-
-        Mockito.when(selectJoinStep.join(Tables.ROUTE_STOP))
-               .thenReturn(selectOnStep0);
-
-        @SuppressWarnings("unchecked")
-        SelectOnConditionStep<Record2<Integer, String>> selectOnConditionStep0 = Mockito.mock(SelectOnConditionStep.class);
-
-        Mockito.when(selectOnStep0.on(Tables.STOP.ID.eq(Tables.ROUTE_STOP.STOP_ID)))
-               .thenReturn(selectOnConditionStep0);
-
-        @SuppressWarnings("unchecked")
-        SelectOnStep<Record2<Integer, String>> selectOnStep1 = Mockito.mock(SelectOnStep.class);
-
-        Mockito.when(selectOnConditionStep0.join(Tables.DIRECTION))
-               .thenReturn(selectOnStep1);
-
-        @SuppressWarnings("unchecked")
-        SelectOnConditionStep<Record2<Integer, String>> selectOnConditionStep1 = Mockito.mock(SelectOnConditionStep.class);
-
-        Mockito.when(selectOnStep1.on(Tables.ROUTE_STOP.DIRECTION_ID.eq(Tables.DIRECTION.ID)))
-               .thenReturn(selectOnConditionStep1);
-
-        @SuppressWarnings("unchecked")
-        SelectConditionStep<Record2<Integer, String>> routeIdSelectConditionStep = Mockito.mock(SelectConditionStep.class);
+        try {
+            expectedJson = this.mapper.writeValueAsString(expected);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         String routeId = "22";
 
-        Mockito.when(selectOnConditionStep1.where(Tables.ROUTE_STOP.ROUTE_ID.eq(routeId)))
-               .thenReturn(routeIdSelectConditionStep);
-
-        @SuppressWarnings("unchecked")
-        SelectConditionStep<Record2<Integer, String>> directionSelectConditionStep = Mockito.mock(SelectConditionStep.class);
-
         String direction = "Southbound";
 
-        Mockito.when(routeIdSelectConditionStep.and(Tables.DIRECTION.NAME.eq(direction)))
-               .thenReturn(directionSelectConditionStep);
+        String key = "route:%s:direction:%s:stops".formatted(routeId, direction);
 
-        Mockito.when(directionSelectConditionStep.fetchInto(Stop.class))
-               .thenReturn(List.copyOf(expected));
+        Mockito.when(this.jedis.get(key))
+               .thenReturn(expectedJson);
 
         Set<Stop> actual = this.service.getStops(routeId, direction);
 
