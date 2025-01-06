@@ -6,8 +6,6 @@ import app.cta4j.provider.*;
 import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
-import com.zaxxer.hikari.HikariDataSource;
-import org.jooq.DSLContext;
 import redis.clients.jedis.UnifiedJedis;
 
 public final class ApplicationModule extends AbstractModule {
