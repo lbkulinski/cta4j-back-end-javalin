@@ -1,11 +1,11 @@
 package app.cta4j;
 
 import app.cta4j.client.StationArrivalClient;
-import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.*;
 import app.cta4j.model.train.Line;
 import app.cta4j.model.train.StationArrival;
 import app.cta4j.service.TrainService;
+import io.javalin.http.NotFoundResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -125,7 +125,7 @@ class TrainServiceTests {
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.service.getArrivals(run))
-                  .isInstanceOf(ResourceNotFoundException.class)
+                  .isInstanceOf(NotFoundResponse.class)
                   .hasMessage("The List of arrivals is null for run %s".formatted(run));
     }
 

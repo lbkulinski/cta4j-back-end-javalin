@@ -1,12 +1,12 @@
 package app.cta4j;
 
 import app.cta4j.client.StopArrivalClient;
-import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.ArrivalBody;
 import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.StopArrival;
 import app.cta4j.model.bus.StopEventType;
 import app.cta4j.service.BusService;
+import io.javalin.http.NotFoundResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -122,7 +122,7 @@ class BusServiceTests {
                .thenReturn(response);
 
         Assertions.assertThatThrownBy(() -> this.service.getArrivals(id))
-                  .isInstanceOf(ResourceNotFoundException.class)
+                  .isInstanceOf(NotFoundResponse.class)
                   .hasMessage("The List of arrivals is null for ID %s".formatted(id));
     }
 }

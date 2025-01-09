@@ -1,7 +1,6 @@
 package app.cta4j.service;
 
 import app.cta4j.client.StopArrivalClient;
-import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.ArrivalBody;
 import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.Direction;
@@ -12,8 +11,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
+import io.javalin.http.InternalServerErrorResponse;
+import io.javalin.http.NotFoundResponse;
 import redis.clients.jedis.UnifiedJedis;
 
 import java.util.List;
@@ -67,7 +67,7 @@ public final class StopService {
         String routesJson = this.jedis.get("routes");
 
         if (routesJson == null) {
-            throw new ResourceNotFoundException("The routes JSON is null");
+            throw new NotFoundResponse("The routes JSON is null");
         }
 
         TypeReference<List<Route>> type = new TypeReference<>() {};
@@ -95,7 +95,7 @@ public final class StopService {
         String directionsJson = this.jedis.get(key);
 
         if (directionsJson == null) {
-            throw new ResourceNotFoundException("The directions JSON is null for route ID %s".formatted(routeId));
+            throw new NotFoundResponse("The directions JSON is null for route ID %s".formatted(routeId));
         }
 
         TypeReference<List<Direction>> type = new TypeReference<>() {};
@@ -127,7 +127,7 @@ public final class StopService {
         String stopsJson = this.jedis.get(keyString);
 
         if (stopsJson == null) {
-            throw new ResourceNotFoundException("""
+            throw new NotFoundResponse("""
             The stops JSON is null for route ID %s and direction %s""".formatted(routeId, direction));
         }
 
@@ -156,21 +156,21 @@ public final class StopService {
         ArrivalResponse<StopArrival> response = this.client.getStopArrivals(routeId, stopId);
 
         if (response == null) {
-            throw new RuntimeException("""
+            throw new InternalServerErrorResponse("""
             The arrival response is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
         }
 
         ArrivalBody<StopArrival> body = response.body();
 
         if (body == null) {
-            throw new RuntimeException("""
+            throw new InternalServerErrorResponse("""
             The arrival body is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
         }
 
         List<StopArrival> arrivals = body.arrivals();
 
         if (arrivals == null) {
-            throw new ResourceNotFoundException("""
+            throw new NotFoundResponse("""
             The List of arrivals is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
         }
 

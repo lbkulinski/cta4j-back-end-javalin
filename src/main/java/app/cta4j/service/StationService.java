@@ -1,7 +1,6 @@
 package app.cta4j.service;
 
 import app.cta4j.client.StationArrivalClient;
-import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.*;
 import app.cta4j.model.train.Line;
 import app.cta4j.model.train.Station;
@@ -11,8 +10,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
+import io.javalin.http.InternalServerErrorResponse;
+import io.javalin.http.NotFoundResponse;
 import redis.clients.jedis.UnifiedJedis;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public final class StationService {
         String stationsJson = this.jedis.get("stations");
 
         if (stationsJson == null) {
-            throw new ResourceNotFoundException("The stations JSON is null");
+            throw new NotFoundResponse("The stations JSON is null");
         }
 
         TypeReference<List<Station>> type = new TypeReference<>() {};
@@ -73,19 +73,19 @@ public final class StationService {
         ArrivalResponse<StationArrival> response = this.client.getStationArrivals(stationId);
 
         if (response == null) {
-            throw new RuntimeException("The arrival response is null for station ID %s".formatted(stationId));
+            throw new InternalServerErrorResponse("The arrival response is null for station ID %s".formatted(stationId));
         }
 
         ArrivalBody<StationArrival> body = response.body();
 
         if (body == null) {
-            throw new RuntimeException("The arrival body is null for station ID %s".formatted(stationId));
+            throw new InternalServerErrorResponse("The arrival body is null for station ID %s".formatted(stationId));
         }
 
         List<StationArrival> arrivals = body.arrivals();
 
         if (arrivals == null) {
-            throw new ResourceNotFoundException("The List of arrivals is null for station ID %s".formatted(stationId));
+            throw new NotFoundResponse("The List of arrivals is null for station ID %s".formatted(stationId));
         }
 
         return arrivals.stream()
