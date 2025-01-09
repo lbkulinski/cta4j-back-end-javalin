@@ -1,6 +1,5 @@
 package app.cta4j;
 
-import app.cta4j.exception.ResourceNotFoundException;
 import app.cta4j.model.bus.Direction;
 import app.cta4j.model.bus.Route;
 import app.cta4j.model.bus.Stop;
@@ -97,13 +96,6 @@ public final class Application {
                    List<StopArrival> arrivals = busService.getArrivals(id);
 
                    ctx.json(arrivals);
-               })
-               .exception(ResourceNotFoundException.class, (e, ctx) -> {
-                   String message = e.getMessage();
-
-                   Application.LOGGER.error(message);
-
-                   ctx.status(404);
                })
                .exception(Exception.class, (e, ctx) -> {
                    String message = e.getMessage();
