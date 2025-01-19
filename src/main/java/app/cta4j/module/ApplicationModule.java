@@ -1,29 +1,48 @@
 package app.cta4j.module;
 
-import app.cta4j.client.StopArrivalClient;
-import app.cta4j.client.StationArrivalClient;
-import app.cta4j.provider.*;
 import com.amazonaws.secretsmanager.caching.SecretCache;
+import com.amazonaws.secretsmanager.caching.SecretCacheConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.AbstractModule;
+import dagger.Module;
+import dagger.Provides;
+import jakarta.inject.Singleton;
 import redis.clients.jedis.UnifiedJedis;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
-public final class ApplicationModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        this.bind(ObjectMapper.class)
-            .toProvider(ObjectMapperProvider.class);
-
-        this.bind(SecretCache.class)
-            .toProvider(SecretCacheProvider.class);
-
-        this.bind(UnifiedJedis.class)
-            .toProvider(RedisClientProvider.class);
-
-        this.bind(StationArrivalClient.class)
-            .toProvider(StationArrivalClientProvider.class);
-
-        this.bind(StopArrivalClient.class)
-            .toProvider(StopArrivalClientProvider.class);
+@Module
+public final class ApplicationModule {
+    @Provides
+    @Singleton
+    public ObjectMapper provideObjectMapper() {
+        return new ObjectMapper();
     }
+
+    @Provides
+    @Singleton
+    public SecretCache provideSecretCache() {
+        SecretsManagerClient client = SecretsManagerClient.builder()
+                                                          .build();
+
+        SecretCacheConfiguration configuration = new SecretCacheConfiguration();
+
+        configuration.setClient(client);
+
+        return new SecretCache(configuration);
+    }
+
+    @Provides
+    @Singleton
+    public UnifiedJedis provideUnifiedJedis() {
+        return null;
+    }
+
+//        this.bind(UnifiedJedis.class)
+//            .toProvider(RedisClientProvider.class);
+//
+//        this.bind(StationArrivalClient.class)
+//            .toProvider(StationArrivalClientProvider.class);
+//
+//        this.bind(StopArrivalClient.class)
+//            .toProvider(StopArrivalClientProvider.class);
+//    }
 }
