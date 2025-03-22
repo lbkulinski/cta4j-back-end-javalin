@@ -1,7 +1,6 @@
 package app.cta4j.service;
 
 import app.cta4j.exception.SecretServiceException;
-import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
