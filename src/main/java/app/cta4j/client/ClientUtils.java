@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.okhttp.FailsafeCall;
+import io.javalin.http.NotFoundResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import okhttp3.*;
@@ -114,7 +115,7 @@ public final class ClientUtils {
         if (arrivals == null) {
             String message = "Arrivals list is null";
 
-            throw new ClientException(message);
+            throw new NotFoundResponse(message);
         }
 
         return arrivals;

@@ -1,8 +1,7 @@
 package app.cta4j.service;
 
 import app.cta4j.client.StopArrivalClient;
-import app.cta4j.model.ArrivalBody;
-import app.cta4j.model.ArrivalResponse;
+import app.cta4j.exception.ClientException;
 import app.cta4j.model.bus.Direction;
 import app.cta4j.model.bus.Route;
 import app.cta4j.model.bus.Stop;
@@ -11,9 +10,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.inject.Inject;
-import io.javalin.http.InternalServerErrorResponse;
 import io.javalin.http.NotFoundResponse;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import redis.clients.jedis.UnifiedJedis;
 
 import java.util.List;
@@ -21,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public final class StopService {
     private final UnifiedJedis jedis;
 
@@ -147,32 +147,21 @@ public final class StopService {
     }
 
     public Set<Stop> getStops(String routeId, String direction) {
+        Objects.requireNonNull(routeId);
+
+        Objects.requireNonNull(direction);
+
         RouteDirection key = new RouteDirection(routeId, direction);
 
         return this.stopCache.get(key, this::loadStops);
     }
 
-    public List<StopArrival> getArrivals(String routeId, String stopId) {
-        ArrivalResponse<StopArrival> response = this.client.getStopArrivals(routeId, stopId);
+    public List<StopArrival> getArrivals(String routeId, String stopId) throws ClientException {
+        Objects.requireNonNull(routeId);
 
-        if (response == null) {
-            throw new InternalServerErrorResponse("""
-            The arrival response is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
-        }
+        Objects.requireNonNull(stopId);
 
-        ArrivalBody<StopArrival> body = response.body();
-
-        if (body == null) {
-            throw new InternalServerErrorResponse("""
-            The arrival body is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
-        }
-
-        List<StopArrival> arrivals = body.arrivals();
-
-        if (arrivals == null) {
-            throw new NotFoundResponse("""
-            The List of arrivals is null for route ID %s and stop ID %s""".formatted(routeId, stopId));
-        }
+        List<StopArrival> arrivals = this.client.getStopArrivals(routeId, stopId);
 
         return List.copyOf(arrivals);
     }
