@@ -1,29 +1,24 @@
 package app.cta4j.module;
 
-import app.cta4j.client.StopArrivalClient;
-import app.cta4j.client.StationArrivalClient;
 import app.cta4j.provider.*;
-import com.amazonaws.secretsmanager.caching.SecretCache;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
-import redis.clients.jedis.UnifiedJedis;
+import okhttp3.OkHttpClient;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
 public final class ApplicationModule extends AbstractModule {
     @Override
     protected void configure() {
         this.bind(ObjectMapper.class)
-            .toProvider(ObjectMapperProvider.class);
+            .toProvider(ObjectMapperProvider.class)
+            .asEagerSingleton();
 
-        this.bind(SecretCache.class)
-            .toProvider(SecretCacheProvider.class);
+        this.bind(SecretsManagerClient.class)
+            .toProvider(SecretsManagerProvider.class)
+            .asEagerSingleton();
 
-        this.bind(UnifiedJedis.class)
-            .toProvider(RedisClientProvider.class);
-
-        this.bind(StationArrivalClient.class)
-            .toProvider(StationArrivalClientProvider.class);
-
-        this.bind(StopArrivalClient.class)
-            .toProvider(StopArrivalClientProvider.class);
+        this.bind(OkHttpClient.class)
+            .toProvider(HttpClientProvider.class)
+            .asEagerSingleton();
     }
 }
