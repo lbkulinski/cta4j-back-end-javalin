@@ -15,39 +15,39 @@ import java.util.Objects;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record StationArrival(
-        @JsonAlias("rn")
-        String run,
+    @JsonAlias("rn")
+    String run,
 
-        @JsonAlias("rt")
-        Line line,
+    @JsonAlias("rt")
+    Line line,
 
-        @JsonAlias("destNm")
-        String destination,
+    @JsonAlias("destNm")
+    String destination,
 
-        @JsonAlias("staNm")
-        String station,
+    @JsonAlias("staNm")
+    String station,
 
-        @JsonAlias("prdt")
-        @JsonDeserialize(converter = StringToInstantConverter.class)
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
-        Instant predictionTime,
+    @JsonAlias("prdt")
+    @JsonDeserialize(converter = StringToInstantConverter.class)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+    Instant predictionTime,
 
-        @JsonAlias("arrT")
-        @JsonDeserialize(converter = StringToInstantConverter.class)
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
-        Instant arrivalTime,
+    @JsonAlias("arrT")
+    @JsonDeserialize(converter = StringToInstantConverter.class)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+    Instant arrivalTime,
 
-        @JsonAlias("isApp")
-        @JsonDeserialize(converter = StringToBooleanConverter.class)
-        boolean due,
+    @JsonAlias("isApp")
+    @JsonDeserialize(converter = StringToBooleanConverter.class)
+    boolean due,
 
-        @JsonAlias("isSch")
-        @JsonDeserialize(converter = StringToBooleanConverter.class)
-        boolean scheduled,
+    @JsonAlias("isSch")
+    @JsonDeserialize(converter = StringToBooleanConverter.class)
+    boolean scheduled,
 
-        @JsonAlias("isDly")
-        @JsonDeserialize(converter = StringToBooleanConverter.class)
-        boolean delayed
+    @JsonAlias("isDly")
+    @JsonDeserialize(converter = StringToBooleanConverter.class)
+    boolean delayed
 ) implements Arrival {
     public StationArrival {
         Objects.requireNonNull(run);
