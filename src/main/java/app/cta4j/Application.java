@@ -1,6 +1,5 @@
 package app.cta4j;
 
-import app.cta4j.model.bus.Direction;
 import app.cta4j.model.bus.Route;
 import app.cta4j.model.bus.Stop;
 import app.cta4j.model.bus.StopArrival;
@@ -42,7 +41,7 @@ public final class Application {
 
         Javalin.create()
                .get("/api/stations", ctx -> {
-                   Set<Station> stations = stationService.getStations();
+                   List<Station> stations = stationService.getStations();
 
                    ctx.json(stations);
                })
@@ -61,14 +60,14 @@ public final class Application {
                    ctx.json(arrivals);
                })
                .get("/api/routes", ctx -> {
-                   Set<Route> routes = stopService.getRoutes();
+                   List<Route> routes = stopService.getRoutes();
 
                    ctx.json(routes);
                })
                .get("/api/routes/{routeId}/directions", ctx -> {
                    String routeId = ctx.pathParam("routeId");
 
-                   Set<Direction> directions = stopService.getDirections(routeId);
+                   List<String> directions = stopService.getDirections(routeId);
 
                    ctx.json(directions);
                })
@@ -77,7 +76,7 @@ public final class Application {
 
                    String direction = ctx.pathParam("direction");
 
-                   Set<Stop> stops = stopService.getStops(routeId, direction);
+                   List<Stop> stops = stopService.getStops(routeId, direction);
 
                    ctx.json(stops);
                })

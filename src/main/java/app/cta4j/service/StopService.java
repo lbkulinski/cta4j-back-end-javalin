@@ -2,33 +2,31 @@ package app.cta4j.service;
 
 import app.cta4j.client.StopArrivalClient;
 import app.cta4j.exception.ClientException;
-import app.cta4j.model.bus.Direction;
-import app.cta4j.model.bus.Route;
-import app.cta4j.model.bus.Stop;
-import app.cta4j.model.bus.StopArrival;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import app.cta4j.model.bus.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import io.javalin.http.NotFoundResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import redis.clients.jedis.UnifiedJedis;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
 public final class StopService {
-    private final UnifiedJedis jedis;
+    private final DynamoDbTable<Route> routes;
 
-    private final ObjectMapper mapper;
+    private final DynamoDbTable<RouteDirections> routeDirections;
 
-    private final Cache<String, Set<Route>> routeCache;
+    private final DynamoDbTable<RouteStops> routeStops;
 
-    private final Cache<String, Set<Direction>> directionCache;
+    private final Cache<String, List<Route>> routeCache;
+
+    private final Cache<String, List<String>> directionCache;
 
     private record RouteDirection(String routeId, String direction) {
         public RouteDirection {
@@ -38,15 +36,25 @@ public final class StopService {
         }
     }
 
-    private final Cache<RouteDirection, Set<Stop>> stopCache;
+    private final Cache<RouteDirection, List<Stop>> stopCache;
 
     private final StopArrivalClient client;
 
     @Inject
-    public StopService(UnifiedJedis jedis, ObjectMapper mapper, StopArrivalClient client) {
-        this.jedis = Objects.requireNonNull(jedis);
+    public StopService(DynamoDbEnhancedClient dynamoDbClient, StopArrivalClient client) {
+        Objects.requireNonNull(dynamoDbClient);
 
-        this.mapper = Objects.requireNonNull(mapper);
+        TableSchema<Route> routeSchema = TableSchema.fromImmutableClass(Route.class);
+
+        this.routes = dynamoDbClient.table("routes", routeSchema);
+
+        TableSchema<RouteDirections> routeDirectionsSchema = TableSchema.fromImmutableClass(RouteDirections.class);
+
+        this.routeDirections = dynamoDbClient.table("route_directions", routeDirectionsSchema);
+
+        TableSchema<RouteStops> routeStopsSchema = TableSchema.fromImmutableClass(RouteStops.class);
+
+        this.routeStops = dynamoDbClient.table("route_stops", routeStopsSchema);
 
         this.routeCache = Caffeine.newBuilder()
                                   .expireAfterWrite(24L, TimeUnit.HOURS)
@@ -63,90 +71,53 @@ public final class StopService {
         this.client = Objects.requireNonNull(client);
     }
 
-    private Set<Route> loadRoutes() {
-        String routesJson = this.jedis.get("routes");
+    private List<Route> loadRoutes() {
+        List<Route> routes = this.routes.scan()
+                                        .items()
+                                        .stream()
+                                        .toList();
 
-        if (routesJson == null) {
-            throw new NotFoundResponse("The routes JSON is null");
-        }
-
-        TypeReference<List<Route>> type = new TypeReference<>() {};
-
-        List<Route> routes;
-
-        try {
-            routes = this.mapper.readValue(routesJson, type);
-        } catch (Exception e) {
-            String message = e.getMessage();
-
-            throw new RuntimeException(message);
-        }
-
-        return Set.copyOf(routes);
+        return List.copyOf(routes);
     }
 
-    public Set<Route> getRoutes() {
+    public List<Route> getRoutes() {
         return this.routeCache.get("routes", key -> this.loadRoutes());
     }
 
-    private Set<Direction> loadDirections(String routeId) {
-        String key = "route:%s:directions".formatted(routeId);
+    private List<String> loadDirections(String routeId) {
+        Objects.requireNonNull(routeId);
 
-        String directionsJson = this.jedis.get(key);
+        Key key = Key.builder()
+                     .partitionValue(routeId)
+                     .build();
 
-        if (directionsJson == null) {
-            throw new NotFoundResponse("The directions JSON is null for route ID %s".formatted(routeId));
-        }
+        List<String> directions = this.routeDirections.getItem(key)
+                                                      .getDirections();
 
-        TypeReference<List<Direction>> type = new TypeReference<>() {};
-
-        List<Direction> directions;
-
-        try {
-            directions = this.mapper.readValue(directionsJson, type);
-        } catch (Exception e) {
-            String message = e.getMessage();
-
-            throw new RuntimeException(message);
-        }
-
-        return Set.copyOf(directions);
+        return List.copyOf(directions);
     }
 
-    public Set<Direction> getDirections(String routeId) {
+    public List<String> getDirections(String routeId) {
         return this.directionCache.get(routeId, this::loadDirections);
     }
 
-    private Set<Stop> loadStops(RouteDirection key) {
-        String routeId = key.routeId();
+    private List<Stop> loadStops(RouteDirection routeDirection) {
+        String routeId = routeDirection.routeId();
 
-        String direction = key.direction();
+        String direction = routeDirection.direction();
 
-        String keyString = "route:%s:direction:%s:stops".formatted(routeId, direction);
+        Key key = Key.builder()
+                     .partitionValue(routeId)
+                     .sortValue(direction)
+                     .build();
 
-        String stopsJson = this.jedis.get(keyString);
+        List<Stop> stops = this.routeStops.getItem(key)
+                                          .getStops();
 
-        if (stopsJson == null) {
-            throw new NotFoundResponse("""
-            The stops JSON is null for route ID %s and direction %s""".formatted(routeId, direction));
-        }
-
-        TypeReference<List<Stop>> type = new TypeReference<>() {};
-
-        List<Stop> stops;
-
-        try {
-            stops = this.mapper.readValue(stopsJson, type);
-        } catch (Exception e) {
-            String message = e.getMessage();
-
-            throw new RuntimeException(message);
-        }
-
-        return Set.copyOf(stops);
+        return List.copyOf(stops);
     }
 
-    public Set<Stop> getStops(String routeId, String direction) {
+    public List<Stop> getStops(String routeId, String direction) {
         Objects.requireNonNull(routeId);
 
         Objects.requireNonNull(direction);
