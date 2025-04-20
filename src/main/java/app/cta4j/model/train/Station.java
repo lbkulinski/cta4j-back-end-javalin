@@ -1,18 +1,19 @@
 package app.cta4j.model.train;
 
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Value;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
-import java.util.Objects;
-
+@Value
 @Builder
-public record Station(
-    String id,
+@DynamoDbImmutable(builder = Station.StationBuilder.class)
+public class Station {
+    @Getter(onMethod_ = {@DynamoDbPartitionKey, @DynamoDbAttribute("id")})
+    String id;
 
-    String name
-) {
-    public Station {
-        Objects.requireNonNull(id);
-
-        Objects.requireNonNull(name);
-    }
+    @Getter(onMethod_ = {@DynamoDbAttribute("name")})
+    String name;
 }

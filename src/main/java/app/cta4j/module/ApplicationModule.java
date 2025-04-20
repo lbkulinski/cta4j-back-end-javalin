@@ -4,6 +4,7 @@ import app.cta4j.provider.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import okhttp3.OkHttpClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
 public final class ApplicationModule extends AbstractModule {
@@ -15,6 +16,10 @@ public final class ApplicationModule extends AbstractModule {
 
         this.bind(SecretsManagerClient.class)
             .toProvider(SecretsManagerProvider.class)
+            .asEagerSingleton();
+
+        this.bind(DynamoDbEnhancedClient.class)
+            .toProvider(DynamoDbClientProvider.class)
             .asEagerSingleton();
 
         this.bind(OkHttpClient.class)
