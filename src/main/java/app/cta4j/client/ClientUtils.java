@@ -21,13 +21,9 @@ import java.util.Objects;
 public final class ClientUtils {
     private final OkHttpClient httpClient;
 
-    private final ObjectMapper objectMapper;
-
     @Inject
-    public ClientUtils(OkHttpClient httpClient, ObjectMapper objectMapper) {
+    public ClientUtils(OkHttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient);
-
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public record ResponseData(int statusCode, String body) {
@@ -85,39 +81,5 @@ public final class ClientUtils {
         }
 
         return new ResponseData(code, body);
-    }
-
-    public <T extends Arrival> List<T> extractArrivals(String body) throws ClientException {
-        Objects.requireNonNull(body);
-
-        TypeReference<ArrivalResponse<T>> typeReference = new TypeReference<>() {};
-
-        ArrivalResponse<T> arrivalResponse;
-
-        try {
-            arrivalResponse = this.objectMapper.readValue(body, typeReference);
-        } catch (IOException e) {
-            String message = "Failed to parse the response body";
-
-            throw new ClientException(message, e);
-        }
-
-        ArrivalBody<T> arrivalBody = arrivalResponse.body();
-
-        if (arrivalBody == null) {
-            String message = "Response body is null";
-
-            throw new ClientException(message);
-        }
-
-        List<T> arrivals = arrivalBody.arrivals();
-
-        if (arrivals == null) {
-            String message = "Arrivals list is null";
-
-            throw new NotFoundResponse(message);
-        }
-
-        return arrivals;
     }
 }

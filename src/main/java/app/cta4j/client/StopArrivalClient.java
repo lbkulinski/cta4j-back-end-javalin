@@ -1,12 +1,18 @@
 package app.cta4j.client;
 
 import app.cta4j.exception.ClientException;
+import app.cta4j.model.ArrivalBody;
+import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.StopArrival;
 import app.cta4j.service.SecretService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.http.NotFoundResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import okhttp3.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -16,11 +22,15 @@ public final class StopArrivalClient {
 
     private final ClientUtils clientUtils;
 
+    private final ObjectMapper objectMapper;
+
     @Inject
-    public StopArrivalClient(SecretService secretService, ClientUtils clientUtils) {
+    public StopArrivalClient(SecretService secretService, ClientUtils clientUtils, ObjectMapper objectMapper) {
         this.secretService = Objects.requireNonNull(secretService);
 
         this.clientUtils = Objects.requireNonNull(clientUtils);
+
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     private HttpUrl getBaseUrl() throws ClientException {
@@ -44,6 +54,38 @@ public final class StopArrivalClient {
         return url;
     }
 
+    private List<StopArrival> extractArrivals(String body) throws ClientException {
+        Objects.requireNonNull(body);
+
+        TypeReference<ArrivalResponse<StopArrival>> typeReference = new TypeReference<>() {};
+
+        ArrivalResponse<StopArrival> arrivalResponse;
+
+        try {
+            arrivalResponse = this.objectMapper.readValue(body, typeReference);
+        } catch (IOException e) {
+            String message = "Failed to parse the response body";
+
+            throw new ClientException(message, e);
+        }
+
+        ArrivalBody<StopArrival> arrivalBody = arrivalResponse.body();
+
+        if (arrivalBody == null) {
+            String message = "Response body is null";
+
+            throw new ClientException(message);
+        }
+
+        List<StopArrival> arrivals = arrivalBody.arrivals();
+
+        if (arrivals == null) {
+            throw new NotFoundResponse();
+        }
+
+        return List.copyOf(arrivals);
+    }
+
     public List<StopArrival> getStopArrivals(String routeId, String stopId) throws ClientException {
         Objects.requireNonNull(routeId);
 
@@ -61,7 +103,7 @@ public final class StopArrivalClient {
 
         String body = responseData.body();
 
-        return this.clientUtils.extractArrivals(body);
+        return this.extractArrivals(body);
     }
 
     public List<StopArrival> getBusArrivals(String id) throws ClientException {
@@ -78,6 +120,6 @@ public final class StopArrivalClient {
 
         String body = responseData.body();
 
-        return this.clientUtils.extractArrivals(body);
+        return this.extractArrivals(body);
     }
 }
