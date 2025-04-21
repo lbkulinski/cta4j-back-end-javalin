@@ -1,19 +1,27 @@
 package app.cta4j.service;
 
 import app.cta4j.client.StationArrivalClient;
+import app.cta4j.exception.ClientException;
 import app.cta4j.model.train.StationArrival;
-import app.cta4j.model.ArrivalBody;
-import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.train.Line;
-import com.google.inject.Inject;
 import io.javalin.http.InternalServerErrorResponse;
-import io.javalin.http.NotFoundResponse;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
 
+@Singleton
 public final class TrainService {
     private final StationArrivalClient client;
+
+    private static final Logger LOGGER;
+
+    static {
+        LOGGER = LoggerFactory.getLogger(TrainService.class);
+    }
 
     @Inject
     public TrainService(StationArrivalClient client) {
@@ -23,22 +31,16 @@ public final class TrainService {
     public List<StationArrival> getArrivals(String run) {
         Objects.requireNonNull(run);
 
-        ArrivalResponse<StationArrival> response = this.client.getTrainArrivals(run);
+        List<StationArrival> arrivals;
 
-        if (response == null) {
-            throw new InternalServerErrorResponse("The arrival response is null for run %s".formatted(run));
-        }
+        try {
+            arrivals = this.client.getTrainArrivals(run);
+        } catch (ClientException e) {
+            String message = "Failed to get arrivals for run %s".formatted(run);
 
-        ArrivalBody<StationArrival> body = response.body();
+            TrainService.LOGGER.error(message, e);
 
-        if (body == null) {
-            throw new InternalServerErrorResponse("The arrival body is null for run %s".formatted(run));
-        }
-
-        List<StationArrival> arrivals = body.arrivals();
-
-        if (arrivals == null) {
-            throw new NotFoundResponse("The List of arrivals is null for run %s".formatted(run));
+            throw new InternalServerErrorResponse();
         }
 
         return arrivals.stream()

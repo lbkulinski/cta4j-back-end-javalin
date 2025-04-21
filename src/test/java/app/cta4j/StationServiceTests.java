@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import redis.clients.jedis.UnifiedJedis;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -23,9 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 class StationServiceTests {
-    private UnifiedJedis jedis;
-
-    private ObjectMapper mapper;
+    private DynamoDbEnhancedClient dynamoDbClient;
 
     private StationArrivalClient client;
 
@@ -33,13 +32,11 @@ class StationServiceTests {
 
     @BeforeEach
     void setUp() {
-        this.jedis = Mockito.mock(UnifiedJedis.class);
-
-        this.mapper = new ObjectMapper();
+        this.dynamoDbClient = Mockito.mock(DynamoDbEnhancedClient.class);
 
         this.client = Mockito.mock(StationArrivalClient.class);
 
-        this.service = new StationService(this.jedis, this.mapper, this.client);
+        this.service = new StationService(this.dynamoDbClient, this.client);
     }
 
     @DisplayName("Test getStations returns cached stations")
@@ -74,7 +71,7 @@ class StationServiceTests {
         Mockito.when(cache.get(Mockito.eq("stations"), Mockito.any(Function.class)))
                .thenReturn(expected);
 
-        Set<Station> actual = this.service.getStations();
+        List<Station> actual = this.service.getStations();
 
         System.out.println(actual);
 

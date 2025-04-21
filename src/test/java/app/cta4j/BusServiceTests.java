@@ -1,11 +1,13 @@
 package app.cta4j;
 
 import app.cta4j.client.StopArrivalClient;
+import app.cta4j.exception.ClientException;
 import app.cta4j.model.ArrivalBody;
 import app.cta4j.model.ArrivalResponse;
 import app.cta4j.model.bus.StopArrival;
 import app.cta4j.model.bus.StopEventType;
 import app.cta4j.service.BusService;
+import io.javalin.http.InternalServerErrorResponse;
 import io.javalin.http.NotFoundResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +32,7 @@ class BusServiceTests {
 
     @DisplayName("Test getArrivals returns arrivals")
     @Test
-    void testGetArrivals() {
+    void testGetArrivals() throws ClientException {
         String id = "1450";
 
         List<StopArrival> expected = List.of(
@@ -68,12 +70,8 @@ class BusServiceTests {
                        .build()
         );
 
-        ArrivalBody<StopArrival> body = new ArrivalBody<>(expected);
-
-        ArrivalResponse<StopArrival> response = new ArrivalResponse<>(body);
-
         Mockito.when(this.client.getBusArrivals(id))
-               .thenReturn(response);
+               .thenReturn(expected);
 
         List<StopArrival> actual = this.service.getArrivals(id);
 
@@ -83,35 +81,19 @@ class BusServiceTests {
 
     @DisplayName("Test getArrivals throws runtime exception with null response")
     @Test
-    void testGetArrivalsThrowsExceptionNullResponse() {
+    void testGetArrivalsThrowsException() throws ClientException {
         String id = "1450";
 
         Mockito.when(this.client.getBusArrivals(id))
-               .thenReturn(null);
+               .thenThrow(ClientException.class);
 
         Assertions.assertThatThrownBy(() -> this.service.getArrivals(id))
-                  .isInstanceOf(RuntimeException.class)
-                  .hasMessage("The arrival response is null for ID %s".formatted(id));
-    }
-
-    @DisplayName("Test getArrivals throws runtime exception with null body")
-    @Test
-    void testGetArrivalsThrowsExceptionNullBody() {
-        String id = "1450";
-
-        ArrivalResponse<StopArrival>  response = new ArrivalResponse<>(null);
-
-        Mockito.when(this.client.getBusArrivals(id))
-               .thenReturn(response);
-
-        Assertions.assertThatThrownBy(() -> this.service.getArrivals(id))
-                  .isInstanceOf(RuntimeException.class)
-                  .hasMessage("The arrival body is null for ID %s".formatted(id));
+                  .isInstanceOf(InternalServerErrorResponse.class);
     }
 
     @DisplayName("Test getArrivals throws resource not found exception with null arrivals")
     @Test
-    void testGetArrivalsNotFound() {
+    void testGetArrivalsNotFound() throws ClientException {
         String id = "1450";
 
         ArrivalBody<StopArrival>  body = new ArrivalBody<>(null);
@@ -119,10 +101,9 @@ class BusServiceTests {
         ArrivalResponse<StopArrival>  response = new ArrivalResponse<>(body);
 
         Mockito.when(this.client.getBusArrivals(id))
-               .thenReturn(response);
+               .thenThrow(NotFoundResponse.class);
 
         Assertions.assertThatThrownBy(() -> this.service.getArrivals(id))
-                  .isInstanceOf(NotFoundResponse.class)
-                  .hasMessage("The List of arrivals is null for ID %s".formatted(id));
+                  .isInstanceOf(NotFoundResponse.class);
     }
 }

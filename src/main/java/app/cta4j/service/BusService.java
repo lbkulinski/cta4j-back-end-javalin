@@ -1,18 +1,26 @@
 package app.cta4j.service;
 
 import app.cta4j.client.StopArrivalClient;
-import app.cta4j.model.ArrivalBody;
-import app.cta4j.model.ArrivalResponse;
+import app.cta4j.exception.ClientException;
 import app.cta4j.model.bus.StopArrival;
-import com.google.inject.Inject;
 import io.javalin.http.InternalServerErrorResponse;
-import io.javalin.http.NotFoundResponse;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
 
+@Singleton
 public final class BusService {
     private final StopArrivalClient client;
+
+    private static final Logger LOGGER;
+
+    static {
+        LOGGER = LoggerFactory.getLogger(BusService.class);
+    }
 
     @Inject
     public BusService(StopArrivalClient client) {
@@ -22,22 +30,16 @@ public final class BusService {
     public List<StopArrival> getArrivals(String id) {
         Objects.requireNonNull(id);
 
-        ArrivalResponse<StopArrival> response = this.client.getBusArrivals(id);
+        List<StopArrival> arrivals;
 
-        if (response == null) {
-            throw new InternalServerErrorResponse("The arrival response is null for ID %s".formatted(id));
-        }
+        try {
+            arrivals = this.client.getBusArrivals(id);
+        } catch (ClientException e) {
+            String message = "Failed to get arrivals for ID %s".formatted(id);
 
-        ArrivalBody<StopArrival> body = response.body();
+            BusService.LOGGER.error(message, e);
 
-        if (body == null) {
-            throw new InternalServerErrorResponse("The arrival body is null for ID %s".formatted(id));
-        }
-
-        List<StopArrival> arrivals = body.arrivals();
-
-        if (arrivals == null) {
-            throw new NotFoundResponse("The List of arrivals is null for ID %s".formatted(id));
+            throw new InternalServerErrorResponse();
         }
 
         return List.copyOf(arrivals);

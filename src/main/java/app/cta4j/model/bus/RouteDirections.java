@@ -1,6 +1,5 @@
 package app.cta4j.model.bus;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
@@ -8,15 +7,15 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
+import java.util.List;
+
 @Value
 @Builder
-@DynamoDbImmutable(builder = Route.RouteBuilder.class)
-public class Route {
-    @JsonAlias("rt")
+@DynamoDbImmutable(builder = RouteDirections.RouteDirectionsBuilder.class)
+public class RouteDirections {
     @Getter(onMethod_ = {@DynamoDbPartitionKey, @DynamoDbAttribute("id")})
     String id;
 
-    @JsonAlias("rtnm")
-    @Getter(onMethod_ = {@DynamoDbAttribute("name")})
-    String name;
+    @Getter(onMethod_ = {@DynamoDbAttribute("directions")})
+    List<String> directions;
 }

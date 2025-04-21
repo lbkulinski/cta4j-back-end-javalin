@@ -1,19 +1,17 @@
 package app.cta4j.service;
 
 import app.cta4j.client.StationArrivalClient;
-import app.cta4j.model.*;
+import app.cta4j.exception.ClientException;
 import app.cta4j.model.train.Line;
 import app.cta4j.model.train.Station;
 import app.cta4j.model.train.StationArrival;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.inject.Inject;
-import io.javalin.http.InternalServerErrorResponse;
-import io.javalin.http.NotFoundResponse;
-import redis.clients.jedis.UnifiedJedis;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,20 +19,21 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Singleton
 public final class StationService {
-    private final UnifiedJedis jedis;
+    private final DynamoDbTable<Station> stations;
 
-    private final ObjectMapper mapper;
-
-    private final Cache<String, Set<Station>> cache;
+    private final Cache<String, List<Station>> cache;
 
     private final StationArrivalClient client;
 
     @Inject
-    public StationService(UnifiedJedis jedis, ObjectMapper mapper, StationArrivalClient client) {
-        this.jedis = Objects.requireNonNull(jedis);
+    public StationService(DynamoDbEnhancedClient dynamoDbClient, StationArrivalClient client) {
+        Objects.requireNonNull(dynamoDbClient);
 
-        this.mapper = Objects.requireNonNull(mapper);
+        TableSchema<Station> tableSchema = TableSchema.fromImmutableClass(Station.class);
+
+        this.stations = dynamoDbClient.table("stations", tableSchema);
 
         this.cache = Caffeine.newBuilder()
                              .expireAfterWrite(24L, TimeUnit.HOURS)
@@ -43,50 +42,21 @@ public final class StationService {
         this.client = Objects.requireNonNull(client);
     }
 
-    private Set<Station> loadStations() {
-        String stationsJson = this.jedis.get("stations");
+    private List<Station> loadStations() {
+        List<Station> stations = this.stations.scan()
+                                              .items()
+                                              .stream()
+                                              .toList();
 
-        if (stationsJson == null) {
-            throw new NotFoundResponse("The stations JSON is null");
-        }
-
-        TypeReference<List<Station>> type = new TypeReference<>() {};
-
-        List<Station> stations;
-
-        try {
-            stations = this.mapper.readValue(stationsJson, type);
-        } catch (JsonProcessingException e) {
-            String message = e.getMessage();
-
-            throw new RuntimeException(message);
-        }
-
-        return Set.copyOf(stations);
+        return List.copyOf(stations);
     }
 
-    public Set<Station> getStations() {
+    public List<Station> getStations() {
         return this.cache.get("stations", key -> this.loadStations());
     }
 
-    public Set<StationArrival> getArrivals(String stationId) {
-        ArrivalResponse<StationArrival> response = this.client.getStationArrivals(stationId);
-
-        if (response == null) {
-            throw new InternalServerErrorResponse("The arrival response is null for station ID %s".formatted(stationId));
-        }
-
-        ArrivalBody<StationArrival> body = response.body();
-
-        if (body == null) {
-            throw new InternalServerErrorResponse("The arrival body is null for station ID %s".formatted(stationId));
-        }
-
-        List<StationArrival> arrivals = body.arrivals();
-
-        if (arrivals == null) {
-            throw new NotFoundResponse("The List of arrivals is null for station ID %s".formatted(stationId));
-        }
+    public Set<StationArrival> getArrivals(String stationId) throws ClientException {
+        List<StationArrival> arrivals = this.client.getStationArrivals(stationId);
 
         return arrivals.stream()
                        .filter(arrival -> arrival.line() != Line.N_A)
